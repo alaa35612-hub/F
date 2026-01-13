@@ -1,0 +1,2448 @@
+//@version=5
+indicator("Wave Dynamics - Neural Adaptive Engine", shorttitle="〰️WD", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// ██╗    ██╗ █████╗ ██╗   ██╗███████╗    ██████╗ ██╗   ██╗███╗   ██╗ █████╗ ███╗   ███╗██╗ ██████╗███████╗
+// ██║    ██║██╔══██╗██║   ██║██╔════╝    ██╔══██╗╚██╗ ██╔╝████╗  ██║██╔══██╗████╗ ████║██║██╔════╝██╔════╝
+// ██║ █╗ ██║███████║██║   ██║█████╗      ██║  ██║ ╚████╔╝ ██╔██╗ ██║███████║██╔████╔██║██║██║     ███████╗
+// ██║███╗██║██╔══██║╚██╗ ██╔╝██╔══╝      ██║  ██║  ╚██╔╝  ██║╚██╗██║██╔══██║██║╚██╔╝██║██║██║     ╚════██║
+// ╚███╔███╔╝██║  ██║ ╚████╔╝ ███████╗    ██████╔╝   ██║   ██║ ╚████║██║  ██║██║ ╚═╝ ██║██║╚██████╗███████║
+//  ╚══╝╚══╝ ╚═╝  ╚═╝  ╚═══╝  ╚══════╝    ╚═════╝    ╚═╝   ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝ ╚═════╝╚══════╝
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// Institutional Structure Analysis with Elliott Wave Intelligence
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// WAVE DYNAMICS - Neural Adaptive Engine
+//
+// Combines Neural Network market regime detection with Advanced Wave Theory 
+// and Smart Money Concepts to identify high-probability institutional setups.
+//
+// KEY FEATURES:
+// • Neural Adaptive Engine: Hurst-based dynamic sensitivity (adjusts lookback in real-time)
+// • Wave Intelligence: Auto-labeling of 1-5 Impulse Waves with exhaustion detection
+// • Breaker Blocks: Automatically converts failed Order Blocks into high-value zones
+// • MTF Structure Mapping: Aligns Micro (Trade) structure with Macro (Trend) structure
+// • Intrabar Resolution: High-precision trade management using lower timeframe data
+// • Confluence Grading: A+ to C grading system based on 35+ data points
+// • Neural Channel: Time-based channel projection using fractal pivots
+/// WAVE DYNAMICS V3 - Neural Adaptive Engine
+//
+// Combines Neural Network market regime detection with Advanced Wave Theory 
+// and Smart Money Concepts to identify high-probability institutional setups.
+//
+// KEY FEATURES:
+// • Neural Adaptive Engine: Hurst-based dynamic sensitivity (adjusts lookback in real-time)
+// • Wave Intelligence: Auto-labeling of 1-5 Impulse Waves with exhaustion detection
+// • Breaker Blocks: Automatically converts failed Order Blocks into high-value zones
+// • MTF Structure Mapping: Aligns Micro (Trade) structure with Macro (Trend) structure
+// • Intrabar Resolution: High-precision trade management using lower timeframe data
+// • Confluence Grading: A+ to C grading system based on 35+ data points
+// • Neural Channel: Time-based channel projection using fractal pivots
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📥 INPUT GROUPS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+var g_neural    = "🧠 NEURAL ADAPTIVE ENGINE"
+var g_ribbon    = "🌊 ADAPTIVE EQUILIBRIUM RIBBON"
+var g_wave      = "〰️ WAVE CHANNEL & STRUCTURE"
+var g_mtf       = "🔗 MTF STRUCTURE MAPPING"
+var g_smc       = "🏦 SMART MONEY CONCEPTS"
+var g_breaker   = "💥 BREAKER BLOCKS"
+var g_signals   = "🎯 SIGNAL ENGINE"
+var g_chop      = "🌀 CHOP DETECTION (Anti-Ranging)"
+var g_htf       = "📈 HIGHER TIMEFRAME BIAS"
+var g_session   = "🕐 SESSION ANALYSIS"
+var g_targets   = "🎯 TARGETS & STOPS"
+var g_visual    = "🎨 VISUAL SETTINGS"
+var g_dashboard = "📊 DASHBOARD"
+var g_advanced  = "⚙️ ADVANCED SETTINGS"
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🧠 NEURAL ADAPTIVE ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string NEURAL_ENABLE_TT = "Enable the Neural Engine to auto-adjust indicator sensitivity.\n\n" +
+     "Calculates Market Fractal Dimension (Hurst Exponent) in real-time:\n" +
+     "• H > 0.5 (Trending): Tightens lookback to catch fast moves\n" +
+     "• H < 0.5 (Choppy): Widens lookback to filter noise\n" +
+     "• H ≈ 0.5 (Random): Uses balanced settings"
+i_enableNeural        = input.bool(true, "Enable Neural Adaptive Engine", group=g_neural, tooltip=NEURAL_ENABLE_TT)
+string HURST_PERIOD_TT = "The lookback period used to calculate the Hurst Exponent.\n\n" +
+     "• Higher (e.g., 200): Smoother regime detection, slower adaptation\n" +
+     "• Lower (e.g., 50): Faster adaptation, more 'twitchy' changes"
+i_hurstPeriod         = input.int(100, "Hurst Calculation Period", minval=50, maxval=200, group=g_neural, tooltip=HURST_PERIOD_TT)
+string NEURAL_RANGE_TT = "Defines the dynamic range for Swing Detection.\n\n" +
+     "The Neural Engine will scale your 'Base Swing Detection' between\n" +
+     "these minimum and maximum values based on market chaos."
+i_minLookback         = input.int(5, "Min Dynamic Lookback", minval=3, maxval=10, group=g_neural, tooltip=NEURAL_RANGE_TT)
+i_maxLookback         = input.int(20, "Max Dynamic Lookback", minval=15, maxval=50, group=g_neural, tooltip=NEURAL_RANGE_TT)
+string NEURAL_SMOOTH_TT = "Smoothing factor for the Hurst output.\n\n" +
+     "Prevents the lookback length from changing too drastically bar-to-bar.\n" +
+     "Increase this if the channel redraws too frequently."
+i_neuralSmoothing     = input.int(10, "Neural Smoothing", minval=1, maxval=50, group=g_neural, tooltip=NEURAL_SMOOTH_TT)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌊 ADAPTIVE EQUILIBRIUM RIBBON
+// ══════════════════════════════════════════════════════════════════════════════════════════
+string RIBBON_MODE_TT = "Determines how the EMA Ribbon reacts to price.\n\n" +
+     "• Static: Fixed lengths (standard EMAs)\n" +
+     "• Adaptive: Adjusts lengths based on ATR volatility\n" +
+     "• Aggressive: Reacts faster to volatility expansions"
+i_ribbonMode          = input.string("Adaptive", "Ribbon Mode", options=["Static", "Adaptive", "Aggressive"], group=g_ribbon, tooltip=RIBBON_MODE_TT)
+i_volatilityLookback  = input.int(50, "Volatility Lookback", minval=10, maxval=200, group=g_ribbon)
+i_breathingIntensity  = input.float(0.5, "Breathing Intensity", minval=0.1, maxval=1.0, step=0.1, group=g_ribbon)
+i_showExtendedEMAs    = input.bool(true, "Show Extended EMAs (89-144-233)", group=g_ribbon)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 〰️ WAVE CHANNEL & STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string WAVE_ENABLE_TT = "Enable the Wave Intelligence Engine.\n\n" +
+     "• Detects 1-2-3-4-5 Impulse Structures\n" +
+     "• Draws Dynamic Channels based on pivots\n" +
+     "• Calculates Exhaustion and Reversal points"
+i_enableWaveEngine    = input.bool(true, "Enable Wave Intelligence", group=g_wave, tooltip=WAVE_ENABLE_TT)
+string WAVE_LB_TT = "The baseline sensitivity for Swing Detection.\n\n" +
+     "This is the 'Anchor' value. The Neural Engine multiplies this value\n" +
+     "up or down based on market conditions.\n\n" +
+     "• For 1m-5m charts: Try 8-12\n" +
+     "• For 15m-1H charts: Try 5-8"
+i_waveSwingLookback   = input.int(8, "Base Swing Detection", minval=3, maxval=50, group=g_wave, tooltip=WAVE_LB_TT)
+string MIN_WAVE_TT = "Minimum size requirements for a valid wave.\n\n" +
+     "• Min ATR: Wave must travel at least this many ATRs\n" +
+     "• Min Bars: Wave must last at least this many bars\n\n" +
+     "Prevents tiny noise fluctuations from being counted as waves."
+i_minWaveATR          = input.float(2.5, "Min Wave Size (ATR)", minval=0.5, maxval=10.0, step=0.25, group=g_wave, tooltip=MIN_WAVE_TT)
+i_minWaveBars         = input.int(3, "Min Wave Duration (bars)", minval=1, maxval=20, group=g_wave, tooltip=MIN_WAVE_TT)
+string CH_HTF_TT = "Timeframe used for drawing the Wave Channel.\n\n" +
+     "Using a higher timeframe (e.g., 60m on a 5m chart) creates\n" +
+     "cleaner, more significant channel boundaries that respect macro trends."
+i_useHTFChannel       = input.bool(true, "Use HTF for Wave Channel", group=g_wave, tooltip=CH_HTF_TT)
+i_channelHTF          = input.timeframe("60", "Channel HTF", group=g_wave, tooltip=CH_HTF_TT)
+i_useHTFWaveFilter    = input.bool(false, "Require Trend Alignment", group=g_wave, tooltip="Only count waves that align with the Ribbon Trend.")
+i_showWaveLabels      = input.bool(true, "Show Wave Number Labels", group=g_wave, tooltip="Display 1-2-3-4-5 labels at confirmed swing points.")
+i_showProjections     = input.bool(true, "Show Wave Projections", group=g_wave, tooltip="Project Fibonacci targets (61.8, 100, 161.8) for the next wave.")
+i_showWavePolyline    = input.bool(true, "Show Wave Polyline", group=g_wave, tooltip="Connects wave points with a visual line to show structure.")
+i_showExhaustionLine  = input.bool(true, "Show Exhaustion Line", group=g_wave, tooltip="Visual vertical line when momentum decay indicates wave exhaustion.")
+string EXHAUST_TT = "Sensitivity for Wave Exhaustion detection.\n\n" +
+     "• Threshold: Percentage of momentum lost required to flag exhaustion\n" +
+     "• Lower (0.2): Flags early signs of weakness\n" +
+     "• Higher (0.5): Requires significant momentum drop"
+i_exhaustionThreshold = input.float(0.30, "Exhaustion Threshold", minval=0.1, maxval=0.9, step=0.05, group=g_wave, tooltip=EXHAUST_TT)
+i_showMomentumDecay   = input.bool(true, "Show Momentum Decay Background", group=g_wave)
+i_angleSmoothing      = input.int(5, "Angle Smoothing Period", minval=2, maxval=20, group=g_wave)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🔗 MTF STRUCTURE MAPPING
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string MTF_TT = "Multi-Timeframe Structure Mapping.\n\n" +
+     "Checks structure (HH/LL) on a higher timeframe to filter trades.\n\n" +
+     "• MACRO: The higher timeframe defined below\n" +
+     "• MICRO: Your current chart timeframe"
+i_enableMTFMapping    = input.bool(true, "Enable MTF Structure Mapping", group=g_mtf, tooltip=MTF_TT)
+i_macroTimeframe      = input.timeframe("240", "Macro Structure Timeframe", group=g_mtf, tooltip="The higher timeframe to check for structural dominance.")
+string MACRO_FILTERS_TT = "Macro Alignment Rules:\n\n" +
+     "• Require Align: Blocks trades that oppose the Macro Trend\n" +
+     "• Boost Micro: Adds confluence if a Micro Break (LTF) aligns with Macro"
+i_requireMacroAlign   = input.bool(true, "Require Macro Alignment", group=g_mtf, tooltip=MACRO_FILTERS_TT)
+i_microBreakBoost     = input.bool(true, "Boost Micro Breaks", group=g_mtf, tooltip=MACRO_FILTERS_TT)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🏦 SMART MONEY CONCEPTS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string SMC_ENABLE_TT = "Enable Smart Money Concepts detection.\n\n" +
+     "Identifies institutional trading patterns:\n" +
+     "• Order Blocks (OB): Where institutions entered\n" +
+     "• Fair Value Gaps (FVG): Imbalances to be filled\n" +
+     "• Break of Structure (BOS): Trend shifts\n\n" +
+     "These levels act as high-probability reaction zones."
+i_enableSMC           = input.bool(true, "Enable Smart Money Detection", group=g_smc, tooltip=SMC_ENABLE_TT)
+string SHOW_OB_TT = "Display Order Block boxes on the chart.\n\n" +
+     "BULLISH OB (Green): Last bearish candle before strong bullish move.\n" +
+     "BEARISH OB (Red): Last bullish candle before strong bearish move.\n\n" +
+     "Order blocks represent zones where institutions placed large orders.\n" +
+     "Price often returns to these zones before continuing."
+i_showOB              = input.bool(true, "Show Order Blocks", group=g_smc, tooltip=SHOW_OB_TT)
+string SHOW_FVG_TT = "Display Fair Value Gaps boxes on the chart.\n\n" +
+     "FVGs are imbalances created when price moves so fast it leaves gaps.\n" +
+     "Price tends to return to 'fill' these gaps before continuing."
+i_showFVG             = input.bool(true, "Show Fair Value Gaps", group=g_smc, tooltip=SHOW_FVG_TT)
+string SHOW_BOS_TT = "Display Structure Lines (BOS/CHoCH).\n\n" +
+     "• BOS: Break of Structure (Trend Continuation)\n" +
+     "• CHoCH: Change of Character (Trend Reversal)\n\n" +
+     "Lines extend until broken by price."
+i_showStructure       = input.bool(true, "Show Structure Lines (BOS)", group=g_smc, tooltip=SHOW_BOS_TT)
+i_enableChoch         = input.bool(true, "Enable CHoCH Detection", group=g_smc)
+i_labelOBFVG          = input.bool(true, "Label OB/FVG Boxes", group=g_smc)
+i_minDisplacement     = input.float(1.5, "Min OB Displacement (ATR)", minval=0.5, maxval=5.0, step=0.1, group=g_smc)
+i_fvgMinSize          = input.float(0.3, "Min FVG Size (ATR)", minval=0.1, maxval=2.0, step=0.1, group=g_smc)
+i_structureLen        = input.int(50, "Structure Line Length", minval=10, maxval=200, group=g_smc)
+i_obMaxAge            = input.int(100, "Max OB Age (bars)", minval=20, maxval=500, group=g_smc)
+i_fvgMaxAge           = input.int(50, "Max FVG Age (bars)", minval=10, maxval=200, group=g_smc)
+i_chochCooldown       = input.int(10, "Structure Cooldown", minval=3, maxval=50, group=g_smc)
+i_obTransparency      = input.int(85, "OB/FVG Transparency", minval=50, maxval=98, group=g_smc)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 💥 BREAKER BLOCKS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string BREAKER_ENABLE_TT = "Enable Breaker Block Detection.\n\n" +
+     "Breakers are FAILED Order Blocks that flip roles:\n" +
+     "• Bullish OB broken → Becomes Bearish Breaker (Resistance)\n" +
+     "• Bearish OB broken → Becomes Bullish Breaker (Support)\n\n" +
+     "These are often higher probability than standard OBs."
+i_enableBreakers      = input.bool(true, "Enable Breaker Block Detection", group=g_breaker, tooltip=BREAKER_ENABLE_TT)
+i_showBreakers        = input.bool(true, "Show Breaker Zones", group=g_breaker)
+i_breakerExtend       = input.int(100, "Breaker Extension (bars)", minval=20, maxval=300, group=g_breaker)
+i_breakerTransparency = input.int(80, "Breaker Transparency", minval=50, maxval=95, group=g_breaker)
+string BREAKER_BOOST_TT = "Confluence Score Boost.\n\n" +
+     "Points added to the trade score when price is inside a Breaker.\n" +
+     "High values make the engine aggressively target Breaker retests."
+i_breakerBoost        = input.int(4, "Breaker Confluence Boost", minval=1, maxval=10, group=g_breaker, tooltip=BREAKER_BOOST_TT)
+i_colorBreaker        = input.color(#9C27B0, "Breaker Block Color", group=g_breaker)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 SIGNAL ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string SIGNAL_MODE_TT = "Global Signal Aggression Mode.\n\n" +
+     "• Strict: Only A+ setups, full trend alignment, high confluence\n" +
+     "• Balanced: Standard trend + range reversal setups\n" +
+     "• Aggressive: Takes early entries, counter-trend scalps allowed"
+i_institutionalMode   = input.bool(false, "Institutional Mode (Require OB/FVG)", group=g_signals, tooltip="Strict filter: Trade MUST be inside an OB, FVG, or Breaker to trigger.")
+i_mpiPeriod           = input.int(17, "MPI Period", minval=5, maxval=50, group=g_signals)
+i_minGrade            = input.string("B", "Minimum Signal Grade", options=["A+", "A", "B", "C"], group=g_signals)
+string CONFLUENCE_TT = "Minimum Confluence Score to trigger a trade.\n\n" +
+     "Total possible points: 35\n" +
+     "• Higher (e.g., 10): Fewer, higher quality trades\n" +
+     "• Lower (e.g., 4): More frequency, potentially lower win rate"
+i_minConfluence       = input.int(5, "Min Confluence Score", minval=2, maxval=35, group=g_signals, tooltip=CONFLUENCE_TT)
+i_tradeLockBars       = input.int(30, "Trade Lock Duration", minval=10, maxval=100, group=g_signals)
+i_requirePullback     = input.bool(true, "Require Pullback to Ribbon", group=g_signals)
+i_useWaveExhaustion   = input.bool(true, "Use Wave Exhaustion Signals", group=g_signals)
+string WAVE_ENTRY_TT = "Signal Logic for Wave Structure.\n\n" +
+     "• Prefer Wave 2/4: Boosts signals during corrective waves (dip buying)\n" +
+     "• Avoid Wave 5: Filters entries during the final exhaustion wave\n" +
+     "• Channel Filter: Prefer Longs at Channel Bottom, Shorts at Top"
+i_useWaveEntryZones   = input.bool(true, "Prefer Wave 2/4 Entry Zones", group=g_signals, tooltip=WAVE_ENTRY_TT)
+i_avoidWave5          = input.bool(true, "Avoid Wave 5 Entries", group=g_signals, tooltip=WAVE_ENTRY_TT)
+i_useChannelFilter    = input.bool(true, "Use Channel Position Filter", group=g_signals, tooltip=WAVE_ENTRY_TT)
+i_signalSize          = input.string("Small", "Signal Size", options=["Tiny", "Small", "Normal", "Large"], group=g_signals)
+i_signalMode          = input.string("Balanced", "Signal Mode", options=["Strict", "Balanced", "Aggressive"], group=g_signals, tooltip=SIGNAL_MODE_TT)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌀 CHOP DETECTION (Anti-Ranging)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string CHOP_ENABLE_TT = "Enable Anti-Ranging filters.\n\n" +
+     "Prevents signals when the market is sideways or volume is low.\n" +
+     "Uses ADX, Choppiness Index, and Range Compression."
+i_enableChop          = input.bool(true, "Enable Chop Detection", group=g_chop, tooltip=CHOP_ENABLE_TT)
+i_adxPeriod           = input.int(14, "ADX Period", minval=5, maxval=50, group=g_chop)
+i_adxThreshold        = input.int(20, "ADX Trend Threshold", minval=10, maxval=40, group=g_chop, tooltip="ADX below this value indicates a non-trending market.")
+i_choppinessPeriod    = input.int(14, "Choppiness Index Period", minval=5, maxval=50, group=g_chop)
+string CHOP_SENS_TT = "Sensitivity of the Chop Filter.\n\n" +
+     "• Higher (>1.0): More strict, fewer trades in weak trends\n" +
+     "• Lower (<1.0): Looser, allows trading in choppy conditions"
+i_chopSensitivity     = input.float(1.1, "Chop Sensitivity", minval=0.5, maxval=3.0, step=0.1, group=g_chop, tooltip=CHOP_SENS_TT)
+i_volumeChopWeight    = input.float(1.2, "Volume Chop Weight", minval=0.0, maxval=3.0, step=0.1, group=g_chop)
+i_chopThreshold       = input.float(45.0, "Chop Intensity Threshold", minval=20, maxval=80, group=g_chop, tooltip="Signals blocked if Chop Intensity exceeds this value (0-100).")
+i_showChopZones       = input.bool(true, "Show Chop Zone Background", group=g_chop)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📈 HIGHER TIMEFRAME BIAS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string HTF_METHOD_TT = "Method used to determine HTF Trend Bias.\n\n" +
+     "• EMA Stack: Conservative (Requires 8 > 21 > 55 EMA alignment)\n" +
+     "• Price vs EMA: Responsive (Price above/below 21 EMA)\n" +
+     "• ADX Trend: Directional Movement Index"
+i_enableHTF           = input.bool(true, "Enable HTF Bias Filter", group=g_htf, tooltip="Only take signals aligned with higher timeframe trend.")
+i_htfTimeframe        = input.timeframe("60", "HTF Timeframe", group=g_htf)
+i_htfMethod           = input.string("Price vs EMA", "HTF Bias Method", options=["EMA Stack", "Price vs EMA", "ADX Trend"], group=g_htf, tooltip=HTF_METHOD_TT)
+i_requireHTFAlign     = input.bool(true, "Require HTF Alignment", group=g_htf, tooltip="Strict mode: Block all counter-trend signals.")
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🕐 SESSION ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string SESSION_TT = "Filter signals by specific trading sessions.\n\n" +
+     "Useful for avoiding low-volume times (e.g., between NY close and Asia open)."
+i_enableSession       = input.bool(false, "Enable Session Filter", group=g_session, tooltip=SESSION_TT)
+i_asiaStart           = input.session("1800-0300", "Asia Session", group=g_session)
+i_londonStart         = input.session("0300-1130", "London Session", group=g_session)
+i_nyStart             = input.session("0800-1700", "New York Session", group=g_session)
+i_allowAsia           = input.bool(true, "Allow Asia Signals", group=g_session)
+i_allowLondon         = input.bool(true, "Allow London Signals", group=g_session)
+i_allowNY             = input.bool(true, "Allow NY Signals", group=g_session)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 TARGETS & STOPS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+i_showTargetLines     = input.bool(true, "Show Target Lines", group=g_targets)
+i_showTargetLabels    = input.bool(true, "Show Target Labels", group=g_targets)
+i_stopATR             = input.float(1.5, "Stop Loss (ATR)", minval=0.5, maxval=3.0, step=0.1, group=g_targets)
+i_tp1Mult             = input.float(1.5, "TP1 Multiplier", minval=0.5, maxval=5.0, step=0.1, group=g_targets)
+i_tp2Mult             = input.float(2.5, "TP2 Multiplier", minval=1.0, maxval=8.0, step=0.1, group=g_targets)
+i_tp3Mult             = input.float(4.0, "TP3 Multiplier", minval=1.5, maxval=10.0, step=0.1, group=g_targets)
+string SWING_SL_TT = "Dynamic Stop Loss Placement.\n\n" +
+     "• Enabled: Places SL at the recent Swing High/Low (Structure based)\n" +
+     "• Disabled: Uses fixed ATR multiplier from entry price"
+i_useSwingSL          = input.bool(true, "Use Swing-Based SL", group=g_targets, tooltip=SWING_SL_TT)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// ⚙️ ADVANCED SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+string LTF_RES_TT = "Use Lower Timeframe data for backtesting precision.\n\n" +
+     "Checks for Stop/Target hits inside the candle using 1-min data.\n" +
+     "Reduces 'phantom wins' where price hits TP and SL in the same bar."
+i_useLTFResolution    = input.bool(true, "Use Intrabar TP/SL Resolution", group=g_advanced, tooltip=LTF_RES_TT)
+i_ltfTimeframe        = input.string("1", "Lower TF for Resolution", options=["1", "3", "5"], group=g_advanced)
+string PERCENTILE_TT = "Adaptive Thresholds using historical percentiles.\n\n" +
+     "Instead of fixed values, signals require metrics to be in the\n" +
+     "Top X% of their historical range (e.g., Top 25% Momentum)."
+i_usePercentile       = input.bool(true, "Use Percentile Thresholds", group=g_advanced, tooltip=PERCENTILE_TT)
+i_percentileLookback  = input.int(200, "Percentile Lookback", minval=50, maxval=500, group=g_advanced)
+i_percentileThreshold = input.int(75, "Momentum Percentile", minval=50, maxval=95, group=g_advanced)
+string LOSS_PROTECT_TT = "Equity Protection.\n\n" +
+     "Temporarily disables signaling after X consecutive losses\n" +
+     "to prevent drawdown during adverse market conditions."
+i_maxConsecLosses     = input.int(3, "Max Consecutive Losses", minval=1, maxval=10, group=g_advanced, tooltip=LOSS_PROTECT_TT)
+i_enableLossProtect   = input.bool(false, "Enable Loss Protection", group=g_advanced, tooltip=LOSS_PROTECT_TT)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎨 VISUAL SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+i_colorBull           = input.color(#00FF88, "Bullish Color", group=g_visual)
+i_colorBear           = input.color(#FF3366, "Bearish Color", group=g_visual)
+i_colorNeutral        = input.color(#FFD600, "Neutral Color", group=g_visual)
+i_colorWave           = input.color(#00E5FF, "Wave Color", group=g_visual)
+i_colorFVG            = input.color(#9C27B0, "FVG Color", group=g_visual)
+i_colorExhaustion     = input.color(#FF6B35, "Exhaustion Color", group=g_visual)
+i_colorChop           = input.color(#FF9800, "Chop Zone Color", group=g_visual)
+i_exhaustLineWidth    = input.int(1, "Exhaustion Line Width", minval=1, maxval=5, group=g_visual)
+i_exhaustTransparency = input.int(70, "Exhaustion Transparency", minval=0, maxval=90, group=g_visual)
+i_exhaustDotSize      = input.string("Tiny", "Exhaustion Dot Size", options=["Tiny", "Small", "Normal", "Large"], group=g_visual)
+i_channelTransparency = input.int(50, "Channel Line Transparency", minval=0, maxval=90, group=g_visual)
+i_bgOpacity           = input.int(95, "Background Opacity", minval=85, maxval=98, group=g_visual)
+i_showWaveBarColors   = input.bool(false, "Color Bars by Wave Strength", group=g_visual)
+i_showWaveTrendlines = input.bool(true, "Show Wave Channel", group=g_wave, tooltip="Draw channel with upper, lower, and center lines")
+i_showWaveProjections = input.bool(true, "Show Wave Projections", group=g_wave, tooltip="Project measured move targets")
+i_showCenterLine = input.bool(true, "Show Center Line", group=g_wave, tooltip="Draw equilibrium center line")
+i_trendlineColor = input.color(color.new(#00E5FF, 30), "Channel Color", group=g_wave)
+i_centerLineColor = input.color(color.new(#FFD700, 40), "Center Line Color", group=g_wave)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📊 DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+i_showDashboard       = input.bool(true, "Show Main Dashboard", group=g_dashboard)
+i_showCombinedPanel   = input.bool(true, "Show Combined Assistant Panel", group=g_dashboard)
+i_showWavePanel       = input.bool(true, "Show Wave Intelligence Panel", group=g_dashboard)
+i_dashboardTransp     = input.int(15, "Dashboard Background Transparency", minval=0, maxval=50, group=g_dashboard)
+i_dashboardBorderTransp = input.int(50, "Dashboard Border Transparency", minval=20, maxval=80, group=g_dashboard)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🛠️ HELPER FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+f_adaptiveEMA(src, len) =>
+    alpha = 2.0 / (len + 1.0)
+    var float ema = na
+    ema := na(ema[1]) ? src : alpha * src + (1.0 - alpha) * nz(ema[1])
+    ema
+f_dynLen(baseLen, mod) => 
+    int l = math.round(baseLen * mod)
+    math.max(2, l)
+f_gradeToNum(g) =>
+    g == "A+" ? 4 : g == "A" ? 3 : g == "B" ? 2 : 1
+f_calculateAngle(price1, price2, bars) =>
+    if bars <= 0 or na(price1) or na(price2)
+        0.0
+    else
+        priceChange = price2 - price1
+        atrVal = ta.atr(14)
+        normalizedSlope = (priceChange / math.max(atrVal, 0.0001)) / math.max(1, bars)
+        angle = math.atan(normalizedSlope * 5) * (180 / math.pi)
+        math.max(-89, math.min(89, angle))
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🧠 HURST EXPONENT CALCULATION - Fractal Dimension Detection
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+f_hurstExponent(src, length) =>
+    mean = ta.sma(src, length)
+    var float sumDev = 0.0
+    var float maxDev = 0.0
+    var float minDev = 0.0
+    sumDev := 0.0
+    maxDev := 0.0
+    minDev := 0.0    
+    for i = 0 to length - 1
+        deviation = src[i] - mean
+        sumDev := sumDev + deviation
+        maxDev := math.max(maxDev, sumDev)
+        minDev := math.min(minDev, sumDev)    
+    range_rs = maxDev - minDev
+    stdDev = ta.stdev(src, length)
+    rs_ratio = stdDev > 0 ? range_rs / stdDev : 1.0
+    hurst = rs_ratio > 0 ? math.log(rs_ratio) / math.log(length) : 0.5
+    math.max(0.2, math.min(0.8, hurst))
+rawHurst = f_hurstExponent(close, i_hurstPeriod)
+smoothedHurst = ta.sma(rawHurst, i_neuralSmoothing)
+hurstTrending = smoothedHurst > 0.55  
+hurstChoppy = smoothedHurst < 0.45 
+hurstRandom = not hurstTrending and not hurstChoppy  
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 DYNAMIC SWING LOOKBACK - Neural Adaptive Sensitivity 
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+f_dynamicLookback() =>
+    if not i_enableNeural
+        i_waveSwingLookback
+    else
+        hurstFactor = 1.5 - smoothedHurst 
+        hurstFactor := math.max(0.5, math.min(2.0, hurstFactor))
+        rawLookback = i_waveSwingLookback * hurstFactor
+        int(math.max(i_minLookback, math.min(i_maxLookback, math.round(rawLookback))))
+dynamicSwingLookback = f_dynamicLookback()
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🔥 INTRABAR TP/SL RESOLUTION
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float[] ltf_lows_global = array.new_float()
+var float[] ltf_highs_global = array.new_float()
+ltf_lows_global := i_useLTFResolution ? request.security_lower_tf(syminfo.tickerid, i_ltfTimeframe, low) : array.new_float()
+ltf_highs_global := i_useLTFResolution ? request.security_lower_tf(syminfo.tickerid, i_ltfTimeframe, high) : array.new_float()
+f_resolveHitOrder_LTF(bool isLong, float sl, float tp) =>
+    int result = 0
+    if i_useLTFResolution and not na(sl) and not na(tp) and array.size(ltf_lows_global) > 0 and array.size(ltf_highs_global) > 0
+        for i = 0 to array.size(ltf_lows_global) - 1
+            lo = array.get(ltf_lows_global, i)
+            hi = array.get(ltf_highs_global, i)
+            hitSL = isLong ? (lo <= sl) : (hi >= sl)
+            hitTP = isLong ? (hi >= tp) : (lo <= tp)
+            if hitSL or hitTP
+                result := hitTP ? 1 : -1
+                break
+    result
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📊 CORE CALCULATIONS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+atr = ta.atr(14)
+atrSMA = ta.sma(atr, i_volatilityLookback)
+volatilityRatio = nz(atr / atrSMA, 1.0)
+avgVolume = ta.sma(volume, 20)
+relativeVolume = nz(volume / avgVolume, 1.0)
+volumeStrong = relativeVolume >= 1.3
+volumeModerate = relativeVolume >= 1.0
+volumeWeak = relativeVolume < 0.7
+atrPercentile = ta.percentile_linear_interpolation(atr, i_percentileLookback, 50)
+isHighVolRegime = atr > atrPercentile * 1.2
+isLowVolRegime = atr < atrPercentile * 0.8
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌀 MARKET REGIME DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+[diplus, diminus, adx_val] = ta.dmi(i_adxPeriod, i_adxPeriod)
+adx_ranging = adx_val < i_adxThreshold
+adx_trending = adx_val >= i_adxThreshold
+adx_strong_trend = adx_val >= 30
+sumTR = math.sum(ta.tr, i_choppinessPeriod)
+highestHigh = ta.highest(high, i_choppinessPeriod)
+lowestLow = ta.lowest(low, i_choppinessPeriod)
+choppiness_index = 100 * math.log10(sumTR / math.max(highestHigh - lowestLow, 0.0001)) / math.log10(i_choppinessPeriod)
+chop_is_ranging = choppiness_index > 61.8
+rangeHigh = ta.highest(high, 20)
+rangeLow = ta.lowest(low, 20)
+currentRange = rangeHigh - rangeLow
+avgRange = ta.sma(ta.highest(high, 20) - ta.lowest(low, 20), 50)
+range_compression = avgRange > 0 ? currentRange / avgRange : 1.0
+is_range_compressed = range_compression < 0.6
+channel_position = (rangeHigh - rangeLow) > 0 ? (close - rangeLow) / (rangeHigh - rangeLow) : 0.5
+atChannelTop = channel_position > 0.85
+atChannelBottom = channel_position < 0.15
+nearChannelTop = channel_position > 0.75
+nearChannelBottom = channel_position < 0.25
+inChannelMiddle = channel_position > 0.35 and channel_position < 0.65
+f_calculateChopIntensity() =>
+    float adx_chop_score = 0.0
+    if adx_ranging
+        adx_chop_score := 30.0 * (1.0 - (adx_val / i_adxThreshold))
+    else if adx_val < 25
+        adx_chop_score := 15.0 * (1.0 - ((adx_val - i_adxThreshold) / 10.0))
+    adx_chop_score := math.max(0.0, math.min(30.0, adx_chop_score * i_chopSensitivity))
+    float chop_idx_score = 0.0
+    if choppiness_index > 61.8
+        chop_idx_score := 25.0 * ((choppiness_index - 61.8) / (100.0 - 61.8))
+    else if choppiness_index > 50
+        chop_idx_score := 12.0 * ((choppiness_index - 50.0) / 11.8)
+    chop_idx_score := math.max(0.0, math.min(25.0, chop_idx_score * i_chopSensitivity))
+    float range_chop_score = 0.0
+    if is_range_compressed
+        range_chop_score := 20.0 * (1.0 - range_compression)
+    else if range_compression < 0.8
+        range_chop_score := 10.0 * (0.8 - range_compression) / 0.2
+    range_chop_score := math.max(0.0, math.min(20.0, range_chop_score * i_chopSensitivity))
+    float channel_chop_score = 0.0
+    float dist_from_center = math.abs(channel_position - 0.5)
+    if dist_from_center < 0.2
+        channel_chop_score := 15.0 * (1.0 - (dist_from_center / 0.2))
+    else if dist_from_center < 0.35
+        channel_chop_score := 8.0 * (0.35 - dist_from_center) / 0.15
+    channel_chop_score := math.max(0.0, math.min(15.0, channel_chop_score))
+    float volume_score = 0.0
+    if relativeVolume < 0.5
+        volume_score := 10.0
+    else if relativeVolume < 0.7
+        volume_score := 7.0
+    else if relativeVolume < 0.9
+        volume_score := 4.0
+    else if relativeVolume < 1.1
+        volume_score := 2.0
+    volume_score := volume_score * i_volumeChopWeight
+    float total = adx_chop_score + chop_idx_score + range_chop_score + channel_chop_score + volume_score
+    math.min(100.0, total)
+chopIntensity = f_calculateChopIntensity()
+string marketRegime = "UNDEFINED"
+bool isTrendingRegime = false
+bool isRangingRegime = false
+bool isTransitionRegime = false
+isDeadZone = i_enableChop ? (chopIntensity >= i_chopThreshold) : false
+isChopZone = isDeadZone
+if adx_strong_trend and not chop_is_ranging
+    marketRegime := "STRONG_TREND"
+    isTrendingRegime := true
+else if adx_trending and chopIntensity < 40
+    marketRegime := "TRENDING"
+    isTrendingRegime := true
+else if chopIntensity >= 60 and is_range_compressed
+    marketRegime := "COMPRESSION"
+    isRangingRegime := true
+else if chopIntensity >= 50
+    marketRegime := "RANGING"
+    isRangingRegime := true
+else if chopIntensity >= 35
+    marketRegime := "TRANSITIONING"
+    isTransitionRegime := true
+else
+    marketRegime := "WEAK_TREND"
+    isTrendingRegime := true
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📈 HIGHER TIMEFRAME BIAS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+f_getHTFData() =>
+    ema8 = ta.ema(close, 8)
+    ema21 = ta.ema(close, 21)
+    ema55 = ta.ema(close, 55)
+    [ema8, ema21, ema55, close]
+[htf_ema8, htf_ema21, htf_ema55, htf_close] = request.security(syminfo.tickerid, i_htfTimeframe, f_getHTFData(), lookahead=barmerge.lookahead_off)
+[htf_diplus, htf_diminus, htf_adx] = ta.dmi(14, 14)
+htfBullStack = htf_ema8 > htf_ema21 and htf_ema21 > htf_ema55
+htfBearStack = htf_ema8 < htf_ema21 and htf_ema21 < htf_ema55
+htfBullPrice = htf_close > htf_ema21
+htfBearPrice = htf_close < htf_ema21
+htfTrending = htf_adx > 20
+htfBias = i_htfMethod == "EMA Stack" ? (htfBullStack ? 1 : htfBearStack ? -1 : 0) : i_htfMethod == "Price vs EMA" ? (htfBullPrice ? 1 : htfBearPrice ? -1 : 0) : htfTrending ? (htf_close > htf_ema21 ? 1 : -1) : 0
+htfBiasText = htfBias > 0 ? "BULLISH" : htfBias < 0 ? "BEARISH" : "NEUTRAL"
+htfBullColor = htfBias > 0 ? color.new(i_colorBull, 85) : na
+htfBearColor = htfBias < 0 ? color.new(i_colorBear, 85) : na
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🔗 MTF STRUCTURE MAPPING - Macro Structure Detection
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+f_getMacroStructure() =>
+    swH = ta.pivothigh(high, 10, 10)
+    swL = ta.pivotlow(low, 10, 10)
+    var float macroHigh = na
+    var float macroLow = na
+    var int macroBullCount = 0
+    var int macroBearCount = 0
+    if not na(swH)
+        if na(macroHigh) or swH > macroHigh
+            macroBullCount := macroBullCount + 1
+            macroBearCount := 0
+        else
+            macroBearCount := macroBearCount + 1
+        macroHigh := swH    
+    if not na(swL)
+        if na(macroLow) or swL > macroLow
+            macroBullCount := macroBullCount + 1
+        else
+            macroBearCount := macroBearCount + 1
+            macroBullCount := 0
+        macroLow := swL    
+    macroDir = macroBullCount >= 2 ? 1 : macroBearCount >= 2 ? -1 : 0
+    [macroDir, macroBullCount >= 2, macroBearCount >= 2]
+[macro_raw_dir, macro_raw_bull, macro_raw_bear] = request.security(syminfo.tickerid, i_macroTimeframe, f_getMacroStructure(), lookahead=barmerge.lookahead_off)
+macroStructureDir = i_enableMTFMapping ? macro_raw_dir : 0
+macroStructureBull = i_enableMTFMapping ? macro_raw_bull : false
+macroStructureBear = i_enableMTFMapping ? macro_raw_bear : false
+macroStructureIntact = (macroStructureDir == 1 and htfBias >= 0) or (macroStructureDir == -1 and htfBias <= 0) or macroStructureDir == 0
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📐 HTF SWING DETECTION FOR WAVE CHANNEL
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+htfChannelSwingLookback = 5 
+f_getChannelHTF() =>
+    ph = ta.pivothigh(high, htfChannelSwingLookback, htfChannelSwingLookback)
+    pl = ta.pivotlow(low, htfChannelSwingLookback, htfChannelSwingLookback)
+    [ph, pl, time[htfChannelSwingLookback]]
+[htf_channel_pivotHigh, htf_channel_pivotLow, htf_pivot_time] = request.security(syminfo.tickerid, i_channelHTF, f_getChannelHTF(), lookahead=barmerge.lookahead_on)
+var float htfSwingHigh1 = na
+var float htfSwingHigh2 = na  
+var int htfSwingHighTime1 = na
+var int htfSwingHighTime2 = na
+var float htfSwingLow1 = na
+var float htfSwingLow2 = na
+var int htfSwingLowTime1 = na
+var int htfSwingLowTime2 = na
+if i_useHTFChannel and not na(htf_channel_pivotHigh)
+    htfSwingHigh2 := htfSwingHigh1
+    htfSwingHighTime2 := htfSwingHighTime1
+    htfSwingHigh1 := htf_channel_pivotHigh
+    htfSwingHighTime1 := htf_pivot_time
+if i_useHTFChannel and not na(htf_channel_pivotLow)
+    htfSwingLow2 := htfSwingLow1
+    htfSwingLowTime2 := htfSwingLowTime1
+    htfSwingLow1 := htf_channel_pivotLow
+    htfSwingLowTime1 := htf_pivot_time
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🕐 SESSION ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+inAsia = not na(time(timeframe.period, i_asiaStart))
+inLondon = not na(time(timeframe.period, i_londonStart))
+inNY = not na(time(timeframe.period, i_nyStart))
+currentSession = inNY and i_allowNY ? "NY" : inLondon and i_allowLondon ? "LONDON" : inAsia and i_allowAsia ? "ASIA" : "OFF"
+sessionAllowed = i_enableSession ? ((inAsia and i_allowAsia) or (inLondon and i_allowLondon) or (inNY and i_allowNY)) : true
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🌊 ADAPTIVE EQUILIBRIUM RIBBON
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+var float lenModifier = 1.0
+if i_ribbonMode == "Static"
+    lenModifier := 1.0
+else
+    float targetMod = volatilityRatio != 0 ? 1.0 / math.max(0.1, volatilityRatio) : 1.0
+    if i_ribbonMode == "Aggressive"
+        targetMod := math.pow(targetMod, 1.5)
+    lenModifier := 1.0 + (targetMod - 1.0) * i_breathingIntensity
+ema8   = f_adaptiveEMA(close, f_dynLen(8, lenModifier))
+ema13  = f_adaptiveEMA(close, f_dynLen(13, lenModifier))
+ema21  = f_adaptiveEMA(close, f_dynLen(21, lenModifier))
+ema34  = f_adaptiveEMA(close, f_dynLen(34, lenModifier))
+ema55  = f_adaptiveEMA(close, f_dynLen(55, lenModifier))
+ema89  = f_adaptiveEMA(close, f_dynLen(89, lenModifier))
+ema144 = f_adaptiveEMA(close, f_dynLen(144, lenModifier))
+ema233 = f_adaptiveEMA(close, f_dynLen(233, lenModifier))
+vwapLike = ta.vwma(close, 20)
+trueMean = (ema21 + ema55 + vwapLike) / 3.0
+ribbonTop = math.max(ema8, ema13, ema21, ema34, ema55)
+ribbonBot = math.min(ema8, ema13, ema21, ema34, ema55)
+ribbonWidth = ribbonTop - ribbonBot
+ribbonMid = (ribbonTop + ribbonBot) / 2.0
+ribbonNormalWidth = ta.sma(ribbonWidth, 50)
+isRibbonTight = ribbonWidth < ribbonNormalWidth * 0.7
+isRibbonWide = ribbonWidth > ribbonNormalWidth * 1.3
+ribbonState = isRibbonTight ? "COMPRESSED" : isRibbonWide ? "EXPANDED" : "NORMAL"
+bullishStack = ema8 > ema13 and ema13 > ema21 and ema21 > ema34 and ema34 > ema55
+bearishStack = ema8 < ema13 and ema13 < ema21 and ema21 < ema34 and ema34 < ema55
+strictBullStack = bullishStack and ema55 > ema89 and ema89 > ema144
+strictBearStack = bearishStack and ema55 < ema89 and ema89 < ema144
+premiumZone = close > trueMean + atr * 0.5
+discountZone = close < trueMean - atr * 0.5
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 💪 MARKET PRESSURE INDEX (MPI)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+mfMultiplier = (close - low) - (high - close)
+mfVolume = mfMultiplier * volume
+MPI = ta.ema(mfVolume, i_mpiPeriod)
+mpiRef = ta.ema(volume * (high - low), i_mpiPeriod)
+normalizedMPI = mpiRef != 0 ? MPI / mpiRef : 0.0
+mpiVelocity = normalizedMPI - normalizedMPI[1]
+mpiAccel = mpiVelocity - mpiVelocity[1]
+mpiSMA = ta.sma(normalizedMPI, 10)
+mpiStdDev = ta.stdev(normalizedMPI, 10)
+mpiTurningBull = mpiVelocity > 0.02 and normalizedMPI > normalizedMPI[2] and mpiAccel > 0
+mpiTurningBear = mpiVelocity < -0.02 and normalizedMPI < normalizedMPI[2] and mpiAccel < 0
+mpiStrong = math.abs(normalizedMPI) > 0.5
+mpiBullish = normalizedMPI > 0.15
+mpiBearish = normalizedMPI < -0.15
+mpiSupportsBull = normalizedMPI > 0 or mpiVelocity > 0
+mpiSupportsBear = normalizedMPI < 0 or mpiVelocity < 0
+var float mpiPivotLow1 = na, var float mpiPivotLow2 = na
+var float pricePivotLow1 = na, var float pricePivotLow2 = na
+var int pivotLowBar1 = na
+var float mpiPivotHigh1 = na, var float mpiPivotHigh2 = na
+var float pricePivotHigh1 = na, var float pricePivotHigh2 = na
+var int pivotHighBar1 = na
+pL = ta.pivotlow(low, 3, 3)
+pH = ta.pivothigh(high, 3, 3)
+if not na(pL)
+    pricePivotLow2 := pricePivotLow1
+    mpiPivotLow2 := mpiPivotLow1
+    pricePivotLow1 := pL
+    mpiPivotLow1 := normalizedMPI[3]
+    pivotLowBar1 := bar_index - 3
+if not na(pH)
+    pricePivotHigh2 := pricePivotHigh1
+    mpiPivotHigh2 := mpiPivotHigh1
+    pricePivotHigh1 := pH
+    mpiPivotHigh1 := normalizedMPI[3]
+    pivotHighBar1 := bar_index - 3
+bullDivergence = not na(pricePivotLow1) and not na(pricePivotLow2) and pricePivotLow1 < pricePivotLow2 and mpiPivotLow1 > mpiPivotLow2 and bar_index - pivotLowBar1 < 20
+bearDivergence = not na(pricePivotHigh1) and not na(pricePivotHigh2) and pricePivotHigh1 > pricePivotHigh2 and mpiPivotHigh1 < mpiPivotHigh2 and bar_index - pivotHighBar1 < 20
+bullDivFresh = bullDivergence and not bullDivergence[1]
+bearDivFresh = bearDivergence and not bearDivergence[1]
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📐 ANGULAR MOMENTUM SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+smoothPeriod = i_angleSmoothing
+currentAngle = f_calculateAngle(close[smoothPeriod], close, smoothPeriod)
+priorAngle1 = f_calculateAngle(close[smoothPeriod + 1], close[1], smoothPeriod)
+priorAngle2 = f_calculateAngle(close[smoothPeriod + 2], close[2], smoothPeriod)
+smoothedAngle = ta.ema(currentAngle, 3)
+rawAngularVelocity = currentAngle - priorAngle1
+angularVelocity = ta.ema(rawAngularVelocity, 3)
+rawAngularAccel = rawAngularVelocity - (priorAngle1 - priorAngle2)
+angularAcceleration = ta.ema(rawAngularAccel, 3)
+angularMomentum = smoothedAngle + (angularVelocity * 3)
+angleState = math.abs(smoothedAngle) > 75 ? "PARABOLIC" : math.abs(smoothedAngle) > 60 ? "EXTREME" : math.abs(smoothedAngle) > 40 ? "STEEP" : math.abs(smoothedAngle) > 20 ? "MODERATE" : "SHALLOW"
+momentumState = angularVelocity > 1 ? "ACCELERATING" : angularVelocity < -1 ? "DECELERATING" : "STEADY"
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 〰️ DYNAMIC WAVE INTELLIGENCE ENGINE
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+type WaveData
+    int startBar
+    float startPrice
+    int endBar
+    float endPrice
+    float peakMomentum
+    float endMomentum
+    float avgAngle
+    float magnitude
+    int duration
+    bool isUpWave
+    string label
+var array<WaveData> completedWaves = array.new<WaveData>()
+var int currentWaveStartBar = na
+var float currentWaveStartPrice = na
+var int currentWaveDir = 0 
+var float currentWavePeakMomentum = 0.0
+var int waveNumber = 0
+var int waveInCurrentTrend = 0 
+var string lastSwingType = "NONE" 
+var int lastTrendDir = 0 
+swingLookback = dynamicSwingLookback
+swingHigh = ta.pivothigh(high, swingLookback, swingLookback)
+swingLow = ta.pivotlow(low, swingLookback, swingLookback)
+var float[] swingHighPrices = array.new_float()
+var int[] swingHighBars = array.new_int()
+var float[] swingLowPrices = array.new_float()
+var int[] swingLowBars = array.new_int()
+var int[] swingHighTimes = array.new_int()
+var int[] swingLowTimes = array.new_int()
+if not na(swingHigh)
+    array.unshift(swingHighPrices, swingHigh)
+    array.unshift(swingHighBars, bar_index - swingLookback)
+    array.unshift(swingHighTimes, time[swingLookback])
+    if array.size(swingHighPrices) > 10
+        array.pop(swingHighPrices)
+        array.pop(swingHighBars)
+        array.pop(swingHighTimes)
+if not na(swingLow)
+    array.unshift(swingLowPrices, swingLow)
+    array.unshift(swingLowBars, bar_index - swingLookback)
+    array.unshift(swingLowTimes, time[swingLookback])
+    if array.size(swingLowPrices) > 10
+        array.pop(swingLowPrices)
+        array.pop(swingLowBars)
+        array.pop(swingLowTimes)
+var float latestSwingPrice = na
+var string latestSwingType = "—"
+swingLowAngleCalc = f_calculateAngle(nz(currentWaveStartPrice, low), nz(swingLow, low), math.max(1, bar_index - swingLookback - nz(currentWaveStartBar, bar_index)))
+swingHighAngleCalc = f_calculateAngle(nz(currentWaveStartPrice, high), nz(swingHigh, high), math.max(1, bar_index - swingLookback - nz(currentWaveStartBar, bar_index)))
+f_waveMomentum() =>
+    mpiScore = math.abs(normalizedMPI) / math.max(0.01, math.abs(mpiSMA) + 0.01)
+    volScore = math.min(2.0, relativeVolume)
+    angleScore = 1.0 + (math.abs(angularVelocity) / 5)
+    result = (mpiScore * 0.4) + (volScore * 0.3) + (angleScore * 0.3)
+    math.max(0.1, result)
+currentMomentum = f_waveMomentum()
+if currentWaveDir != 0
+    if currentMomentum > currentWavePeakMomentum
+        currentWavePeakMomentum := currentMomentum
+momentumDecayPct = 0.0
+if currentWavePeakMomentum > 0.1
+    rawDecay = ((currentWavePeakMomentum - currentMomentum) / currentWavePeakMomentum) * 100
+    momentumDecayPct := math.max(0, math.min(100, rawDecay))
+waveExhausted = false
+if currentWaveDir != 0 and i_enableWaveEngine
+    barsInWave = bar_index - nz(currentWaveStartBar, bar_index)
+    if barsInWave >= i_minWaveBars
+        criteriaCount = 0
+        if momentumDecayPct > (i_exhaustionThreshold * 100)
+            criteriaCount += 1
+        if (currentWaveDir == 1 and bearDivergence) or (currentWaveDir == -1 and bullDivergence)
+            criteriaCount += 1
+        if volumeWeak
+            criteriaCount += 1
+        if math.abs(angularVelocity) < 0.5 and math.abs(smoothedAngle) > 15
+            criteriaCount += 1
+        waveExhausted := criteriaCount >= 2
+currentTrendDir = bullishStack ? 1 : bearishStack ? -1 : 0
+if currentTrendDir != 0 and currentTrendDir != lastTrendDir and lastTrendDir != 0
+    waveInCurrentTrend := 0
+if waveInCurrentTrend >= 5
+    waveInCurrentTrend := 0
+lastTrendDir := currentTrendDir
+var bool waveJustCompleted = false
+var float completedWaveEndPrice = na
+var int completedWaveEndBar = na
+maxWavesPerTrend = 5
+minWaveSize = atr * i_minWaveATR
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📈 STRUCTURE TRACKING 
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float prevConfirmedHigh = na
+var float prevConfirmedLow = na
+var string lastStructure = "—"
+var bool inBullishStructure = false
+var bool inBearishStructure = false 
+isHigherHigh = not na(swingHigh) and not na(prevConfirmedHigh) and swingHigh > prevConfirmedHigh
+isLowerHigh = not na(swingHigh) and not na(prevConfirmedHigh) and swingHigh < prevConfirmedHigh
+isHigherLow = not na(swingLow) and not na(prevConfirmedLow) and swingLow > prevConfirmedLow
+isLowerLow = not na(swingLow) and not na(prevConfirmedLow) and swingLow < prevConfirmedLow
+if not na(swingHigh)
+    if isHigherHigh
+        lastStructure := "HH"
+        inBullishStructure := true
+        inBearishStructure := false
+    else if isLowerHigh
+        lastStructure := "LH"
+        if inBullishStructure
+            inBullishStructure := false
+    prevConfirmedHigh := swingHigh
+if not na(swingLow)
+    if isLowerLow
+        lastStructure := "LL"
+        inBearishStructure := true
+        inBullishStructure := false
+    else if isHigherLow
+        lastStructure := "HL"
+        if inBearishStructure
+            inBearishStructure := false
+    prevConfirmedLow := swingLow
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌊 ADVANCED WAVE ANALYSIS WITH MAGNITUDE TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var bool inActiveSequence = false
+var int sequenceDirection = 0 
+var int waveCount = 0
+var string expectedNext = "—"
+var string lastCountedStructure = "—"
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📐 WAVE MAGNITUDE STORAGE
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float w1StartPrice = na
+var float w1EndPrice = na
+var int w1StartBar = na
+var int w1EndBar = na
+var float w2StartPrice = na
+var float w2EndPrice = na
+var int w2StartBar = na
+var int w2EndBar = na
+var float w3StartPrice = na
+var float w3EndPrice = na
+var int w3StartBar = na
+var int w3EndBar = na
+var float w4StartPrice = na
+var float w4EndPrice = na
+var int w4StartBar = na
+var int w4EndBar = na
+var float w5StartPrice = na
+var float w5EndPrice = na
+var int w5StartBar = na
+var int w5EndBar = na
+var float wave1Mag = na
+var float wave2Mag = na
+var float wave3Mag = na
+var float wave4Mag = na
+var float wave5Mag = na
+var int wave1Dur = na
+var int wave2Dur = na
+var int wave3Dur = na
+var int wave4Dur = na
+var int wave5Dur = na
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📊 WAVE RATIO CALCULATIONS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+wave3to1Ratio = wave1Mag > 0 and wave3Mag > 0 ? wave3Mag / wave1Mag : na
+wave5to3Ratio = wave3Mag > 0 and wave5Mag > 0 ? wave5Mag / wave3Mag : na
+wave5to1Ratio = wave1Mag > 0 and wave5Mag > 0 ? wave5Mag / wave1Mag : na
+wave2RetracePct = wave1Mag > 0 and wave2Mag > 0 ? (wave2Mag / wave1Mag) * 100 : na
+wave4RetracePct = wave3Mag > 0 and wave4Mag > 0 ? (wave4Mag / wave3Mag) * 100 : na
+waveQuality_Healthy = nz(wave3to1Ratio, 1.0) >= 1.0 
+waveQuality_Strong = nz(wave3to1Ratio, 0) >= 1.618  
+waveQuality_Weak = nz(wave3to1Ratio, 1.0) < 0.786  
+waveQuality_Exhausting = nz(wave5to3Ratio, 1.0) < 0.618 
+trendHealthScore = 50.0 
+trendHealthScore := trendHealthScore + (waveQuality_Strong ? 25 : waveQuality_Healthy ? 15 : waveQuality_Weak ? -20 : 0)
+trendHealthScore := trendHealthScore + (waveQuality_Exhausting ? -25 : 0)
+trendHealthScore := math.max(0, math.min(100, trendHealthScore))
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📏 AUTO TRENDLINES
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var line highTrendline = na
+var line lowTrendline = na
+var line centerLine = na
+var line projectedTarget = na
+var label targetLabel = na
+var float trendHigh1 = na
+var float trendHigh2 = na
+var int trendHighBar1 = na
+var int trendHighBar2 = na
+var int trendHighTime1 = na
+var int trendHighTime2 = na
+var float trendLow1 = na
+var float trendLow2 = na
+var int trendLowBar1 = na
+var int trendLowBar2 = na
+var int trendLowTime1 = na
+var int trendLowTime2 = na
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📐 ENHANCED WAVE METRICS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+wave1ATR = wave1Mag / atr
+wave2ATR = wave2Mag / atr
+wave3ATR = wave3Mag / atr
+wave4ATR = wave4Mag / atr
+wave5ATR = wave5Mag / atr
+wave1Pct = not na(w1StartPrice) and w1StartPrice > 0 ? (wave1Mag / w1StartPrice) * 100 : na
+wave2Pct = not na(w2StartPrice) and w2StartPrice > 0 ? (wave2Mag / w2StartPrice) * 100 : na
+wave3Pct = not na(w3StartPrice) and w3StartPrice > 0 ? (wave3Mag / w3StartPrice) * 100 : na
+wave4Pct = not na(w4StartPrice) and w4StartPrice > 0 ? (wave4Mag / w4StartPrice) * 100 : na
+wave5Pct = not na(w5StartPrice) and w5StartPrice > 0 ? (wave5Mag / w5StartPrice) * 100 : na
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📊 CHANNEL WIDTH & CENTER LINE CALCULATIONS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float channelWidth1 = na
+var float channelWidth2 = na 
+var float channelExpansion = na 
+var float centerPoint1 = na
+var float centerPoint2 = na
+var int centerBar1 = na
+var int centerBar2 = na
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 WAVE COUNTING WITH MAGNITUDE TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+if i_enableWaveEngine
+    float potentialW1Mag = not na(swingHigh) and not na(prevConfirmedLow) ? math.abs(swingHigh - prevConfirmedLow) : 0
+    bool wavePassesMinSize = potentialW1Mag >= minWaveSize
+    bool trendAligned = not i_useHTFWaveFilter or (bullishStack and isHigherHigh) or (bearishStack and isLowerLow)
+    if inBullishStructure and not inActiveSequence and isHigherHigh and wavePassesMinSize and (not i_useHTFWaveFilter or bullishStack)
+        inActiveSequence := true
+        sequenceDirection := 1
+        waveCount := 1
+        expectedNext := "HL"
+        lastCountedStructure := "HH"
+        currentWavePeakMomentum := 0.0
+        wave1Mag := na
+        wave2Mag := na
+        wave3Mag := na
+        wave4Mag := na
+        wave5Mag := na
+        wave1Dur := na
+        wave2Dur := na
+        wave3Dur := na
+        wave4Dur := na
+        wave5Dur := na
+        w1StartPrice := na
+        w1EndPrice := na
+        w2StartPrice := na
+        w2EndPrice := na
+        w3StartPrice := na
+        w3EndPrice := na
+        w4StartPrice := na
+        w4EndPrice := na
+        w5StartPrice := na
+        w5EndPrice := na
+        trendHigh1 := na
+        trendHigh2 := na
+        trendLow1 := na
+        trendLow2 := na
+        trendHighTime1 := na
+        trendHighTime2 := na
+        trendLowTime1 := na
+        trendLowTime2 := na
+        w1StartPrice := prevConfirmedLow
+        w1EndPrice := swingHigh
+        w1StartBar := bar_index - swingLookback - 10 
+        w1EndBar := bar_index - swingLookback
+        wave1Mag := math.abs(w1EndPrice - w1StartPrice)
+        wave1Dur := w1EndBar - w1StartBar
+        trendHigh1 := swingHigh
+        trendHighBar1 := bar_index - swingLookback
+        trendHighTime1 := time[swingLookback]
+    else if inActiveSequence and sequenceDirection == 1
+        if isHigherLow and expectedNext == "HL" and waveCount == 1 and (bar_index - swingLookback - w1EndBar) >= i_minWaveBars
+            waveCount := 2
+            expectedNext := "HH"
+            lastCountedStructure := "HL"
+            currentWavePeakMomentum := 0.0
+            w2StartPrice := w1EndPrice
+            w2EndPrice := swingLow
+            w2StartBar := w1EndBar
+            w2EndBar := bar_index - swingLookback
+            wave2Mag := math.abs(w2StartPrice - w2EndPrice)
+            wave2Dur := w2EndBar - w2StartBar
+            trendLow1 := swingLow
+            trendLowBar1 := bar_index - swingLookback
+            trendLowTime1 := time[swingLookback]
+        else if isHigherHigh and expectedNext == "HH" and waveCount == 2 and (bar_index - swingLookback - w2EndBar) >= i_minWaveBars
+            waveCount := 3
+            expectedNext := "HL"
+            lastCountedStructure := "HH"
+            currentWavePeakMomentum := 0.0
+            w3StartPrice := w2EndPrice
+            w3EndPrice := swingHigh
+            w3StartBar := w2EndBar
+            w3EndBar := bar_index - swingLookback
+            wave3Mag := math.abs(w3EndPrice - w3StartPrice)
+            wave3Dur := w3EndBar - w3StartBar
+            trendHigh2 := swingHigh
+            trendHighBar2 := bar_index - swingLookback
+            trendHighTime2 := time[swingLookback]
+        else if isHigherLow and expectedNext == "HL" and waveCount == 3 and (bar_index - swingLookback - w3EndBar) >= i_minWaveBars
+            waveCount := 4
+            expectedNext := "HH"
+            lastCountedStructure := "HL"
+            currentWavePeakMomentum := 0.0
+            w4StartPrice := w3EndPrice
+            w4EndPrice := swingLow
+            w4StartBar := w3EndBar
+            w4EndBar := bar_index - swingLookback
+            wave4Mag := math.abs(w4StartPrice - w4EndPrice)
+            wave4Dur := w4EndBar - w4StartBar
+            trendLow2 := swingLow
+            trendLowBar2 := bar_index - swingLookback
+            trendLowTime2 := time[swingLookback]
+        else if isHigherHigh and expectedNext == "HH" and waveCount == 4 and (bar_index - swingLookback - w4EndBar) >= i_minWaveBars
+            waveCount := 5
+            expectedNext := "—"
+            lastCountedStructure := "HH"
+            currentWavePeakMomentum := 0.0
+            w5StartPrice := w4EndPrice
+            w5EndPrice := swingHigh
+            w5StartBar := w4EndBar
+            w5EndBar := bar_index - swingLookback
+            wave5Mag := math.abs(w5EndPrice - w5StartPrice)
+            wave5Dur := w5EndBar - w5StartBar
+        else if isLowerLow
+            inActiveSequence := false
+            sequenceDirection := 0
+            waveCount := 0
+            expectedNext := "—"
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    // BEARISH SEQUENCE TRACKING
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    float potentialBearW1Mag = not na(swingLow) and not na(prevConfirmedHigh) ? math.abs(prevConfirmedHigh - swingLow) : 0
+    bool bearWavePassesMinSize = potentialBearW1Mag >= minWaveSize
+    if inBearishStructure and not inActiveSequence and isLowerLow and bearWavePassesMinSize and (not i_useHTFWaveFilter or bearishStack)
+        inActiveSequence := true
+        sequenceDirection := -1
+        waveCount := 1
+        expectedNext := "LH"
+        lastCountedStructure := "LL"
+        currentWavePeakMomentum := 0.0
+        wave1Mag := na
+        wave2Mag := na
+        wave3Mag := na
+        wave4Mag := na
+        wave5Mag := na
+        wave1Dur := na
+        wave2Dur := na
+        wave3Dur := na
+        wave4Dur := na
+        wave5Dur := na
+        w1StartPrice := na
+        w1EndPrice := na
+        w2StartPrice := na
+        w2EndPrice := na
+        w3StartPrice := na
+        w3EndPrice := na
+        w4StartPrice := na
+        w4EndPrice := na
+        w5StartPrice := na
+        w5EndPrice := na
+        trendHigh1 := na
+        trendHigh2 := na
+        trendLow1 := na
+        trendLow2 := na
+        trendHighTime1 := na
+        trendHighTime2 := na
+        trendLowTime1 := na
+        trendLowTime2 := na
+        w1StartPrice := prevConfirmedHigh
+        w1EndPrice := swingLow
+        w1StartBar := bar_index - swingLookback - 10
+        w1EndBar := bar_index - swingLookback
+        wave1Mag := math.abs(w1StartPrice - w1EndPrice)
+        wave1Dur := w1EndBar - w1StartBar
+        trendLow1 := swingLow
+        trendLowBar1 := bar_index - swingLookback
+        trendLowTime1 := time[swingLookback]
+    else if inActiveSequence and sequenceDirection == -1
+        if isLowerHigh and expectedNext == "LH" and waveCount == 1 and (bar_index - swingLookback - w1EndBar) >= i_minWaveBars
+            waveCount := 2
+            expectedNext := "LL"
+            lastCountedStructure := "LH"
+            currentWavePeakMomentum := 0.0
+            w2StartPrice := w1EndPrice
+            w2EndPrice := swingHigh
+            w2StartBar := w1EndBar
+            w2EndBar := bar_index - swingLookback
+            wave2Mag := math.abs(w2EndPrice - w2StartPrice)
+            wave2Dur := w2EndBar - w2StartBar
+            trendHigh1 := swingHigh
+            trendHighBar1 := bar_index - swingLookback
+            trendHighTime1 := time[swingLookback]
+        else if isLowerLow and expectedNext == "LL" and waveCount == 2 and (bar_index - swingLookback - w2EndBar) >= i_minWaveBars
+            waveCount := 3
+            expectedNext := "LH"
+            lastCountedStructure := "LL"
+            currentWavePeakMomentum := 0.0
+            w3StartPrice := w2EndPrice
+            w3EndPrice := swingLow
+            w3StartBar := w2EndBar
+            w3EndBar := bar_index - swingLookback
+            wave3Mag := math.abs(w3StartPrice - w3EndPrice)
+            wave3Dur := w3EndBar - w3StartBar
+            trendLow2 := swingLow
+            trendLowBar2 := bar_index - swingLookback
+            trendLowTime2 := time[swingLookback]
+        else if isLowerHigh and expectedNext == "LH" and waveCount == 3 and (bar_index - swingLookback - w3EndBar) >= i_minWaveBars
+            waveCount := 4
+            expectedNext := "LL"
+            lastCountedStructure := "LH"
+            currentWavePeakMomentum := 0.0
+            w4StartPrice := w3EndPrice
+            w4EndPrice := swingHigh
+            w4StartBar := w3EndBar
+            w4EndBar := bar_index - swingLookback
+            wave4Mag := math.abs(w4EndPrice - w4StartPrice)
+            wave4Dur := w4EndBar - w4StartBar
+            trendHigh2 := swingHigh
+            trendHighBar2 := bar_index - swingLookback
+            trendHighTime2 := time[swingLookback]
+        else if isLowerLow and expectedNext == "LL" and waveCount == 4 and (bar_index - swingLookback - w4EndBar) >= i_minWaveBars
+            waveCount := 5
+            expectedNext := "—"
+            lastCountedStructure := "LL"
+            currentWavePeakMomentum := 0.0
+            w5StartPrice := w4EndPrice
+            w5EndPrice := swingLow
+            w5StartBar := w4EndBar
+            w5EndBar := bar_index - swingLookback
+            wave5Mag := math.abs(w5StartPrice - w5EndPrice)
+            wave5Dur := w5EndBar - w5StartBar
+        else if isHigherHigh
+            inActiveSequence := false
+            sequenceDirection := 0
+            waveCount := 0
+            expectedNext := "—"
+    if waveCount >= 5
+        inActiveSequence := false
+        sequenceDirection := 0
+        waveCount := 0
+        expectedNext := "—"
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📐 DRAW WAVE CHANNEL
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float projectedHighTarget = na
+var float projectedLowTarget = na
+var float projectedCenterTarget = na
+var float currentChannelWidth = na
+var float currentCenterPrice = na
+var float highSlope = na
+var float lowSlope = na
+var float centerSlope = na
+if i_showWaveTrendlines and barstate.islast
+    line.delete(highTrendline)
+    line.delete(lowTrendline)
+    line.delete(centerLine)
+    line.delete(projectedTarget)
+    label.delete(targetLabel)
+    float ch_high1 = i_useHTFChannel ? htfSwingHigh2 : trendHigh1
+    float ch_high2 = i_useHTFChannel ? htfSwingHigh1 : trendHigh2
+    int ch_high_time1 = i_useHTFChannel ? htfSwingHighTime2 : trendHighTime1
+    int ch_high_time2 = i_useHTFChannel ? htfSwingHighTime1 : trendHighTime2
+    float ch_low1 = i_useHTFChannel ? htfSwingLow2 : trendLow1
+    float ch_low2 = i_useHTFChannel ? htfSwingLow1 : trendLow2
+    int ch_low_time1 = i_useHTFChannel ? htfSwingLowTime2 : trendLowTime1
+    int ch_low_time2 = i_useHTFChannel ? htfSwingLowTime1 : trendLowTime2
+    bool hasHighTrend = not na(ch_high1) and not na(ch_high2) and not na(ch_high_time1) and not na(ch_high_time2) and ch_high_time2 > ch_high_time1
+    bool hasLowTrend = not na(ch_low1) and not na(ch_low2) and not na(ch_low_time1) and not na(ch_low_time2) and ch_low_time2 > ch_low_time1
+    int avgTimeDiff = int(time - time[1])
+    int futureTime = time + (avgTimeDiff * 50)
+    if hasHighTrend
+        highSlope := (ch_high2 - ch_high1) / (ch_high_time2 - ch_high_time1)
+        projectedHighTarget := ch_high2 + highSlope * (futureTime - ch_high_time2)
+        highTrendline := line.new(ch_high_time1, ch_high1, futureTime, projectedHighTarget, xloc=xloc.bar_time,
+             color=sequenceDirection == 1 ? color.new(i_colorBull, i_channelTransparency) : color.new(i_colorBear, i_channelTransparency), 
+             width=1, style=line.style_solid)
+    if hasLowTrend
+        lowSlope := (ch_low2 - ch_low1) / (ch_low_time2 - ch_low_time1)
+        projectedLowTarget := ch_low2 + lowSlope * (futureTime - ch_low_time2)
+        lowTrendline := line.new(ch_low_time1, ch_low1, futureTime, projectedLowTarget, xloc=xloc.bar_time, 
+             color=sequenceDirection == -1 ? color.new(i_colorBear, i_channelTransparency) : color.new(i_colorBull, i_channelTransparency), 
+             width=1, style=line.style_solid)
+    if i_showCenterLine and hasHighTrend and hasLowTrend
+        float interpLowAt1 = ch_low1 + lowSlope * (ch_high_time1 - ch_low_time1)
+        float center1 = (ch_high1 + interpLowAt1) / 2
+        float interpLowAt2 = ch_low2 + lowSlope * (ch_high_time2 - ch_low_time2)
+        float center2 = (ch_high2 + interpLowAt2) / 2
+        centerSlope := (center2 - center1) / (ch_high_time2 - ch_high_time1)
+        projectedCenterTarget := center2 + centerSlope * (futureTime - ch_high_time2)
+        currentCenterPrice := center2 + centerSlope * (time - ch_high_time2)
+        float currentHigh = ch_high2 + highSlope * (time - ch_high_time2)
+        float currentLow = ch_low2 + lowSlope * (time - ch_low_time2)
+        currentChannelWidth := math.abs(currentHigh - currentLow)
+        centerLine := line.new(ch_high_time1, center1, futureTime, projectedCenterTarget, xloc=xloc.bar_time,
+             color=color.new(i_centerLineColor, i_channelTransparency), 
+             width=1, style=line.style_dashed)
+        string htfLabel = i_useHTFChannel ? " [" + i_channelHTF + "]" : ""
+        string channelInfo = "CH: " + str.tostring(currentChannelWidth, format.mintick) + "\nMID: " + str.tostring(currentCenterPrice, format.mintick) + htfLabel
+        targetLabel := label.new(futureTime, projectedCenterTarget, channelInfo, xloc=xloc.bar_time,
+             color=color.new(i_centerLineColor, 80), textcolor=i_centerLineColor, 
+             style=label.style_label_left, size=size.small)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 📊 PRICE POSITION RELATIVE TO CHANNEL
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float channelPosition = na
+var string priceZone = "—"
+if not na(currentChannelWidth) and currentChannelWidth > 0 and not na(projectedHighTarget) and not na(projectedLowTarget)
+    int refHighTime = i_useHTFChannel ? htfSwingHighTime1 : trendHighTime2
+    float refHighPrice = i_useHTFChannel ? htfSwingHigh1 : trendHigh2
+    int refLowTime = i_useHTFChannel ? htfSwingLowTime1 : trendLowTime2
+    float refLowPrice = i_useHTFChannel ? htfSwingLow1 : trendLow2
+    float upperAtBar = not na(refHighPrice) and not na(highSlope) ? refHighPrice + highSlope * (time - refHighTime) : na
+    float lowerAtBar = not na(refLowPrice) and not na(lowSlope) ? refLowPrice + lowSlope * (time - refLowTime) : na
+    if not na(upperAtBar) and not na(lowerAtBar) and upperAtBar != lowerAtBar
+        channelPosition := ((close - lowerAtBar) / (upperAtBar - lowerAtBar)) * 100
+        channelPosition := math.max(0, math.min(100, channelPosition))
+        priceZone := channelPosition >= 80 ? "UPPER" : channelPosition >= 60 ? "UPPER-MID" : channelPosition >= 40 ? "CENTER" : channelPosition >= 20 ? "LOWER-MID" : "LOWER"
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 MEASURED MOVE PROJECTIONS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var float measuredMoveTarget = na
+var line measuredMoveLine = na
+var label measuredMoveLabel = na
+if i_showWaveProjections and inActiveSequence and waveCount >= 3
+    line.delete(measuredMoveLine)
+    label.delete(measuredMoveLabel)
+    if sequenceDirection == 1 and not na(wave1Mag) and not na(w4EndPrice)
+        avgWaveMag = (wave1Mag + nz(wave3Mag, wave1Mag)) / 2
+        measuredMoveTarget := w4EndPrice + avgWaveMag * 0.786 
+        if barstate.islast
+            measuredMoveLine := line.new(bar_index, measuredMoveTarget, bar_index + 30, measuredMoveTarget, 
+                 color=color.new(#FFD700, 40), width=2, style=line.style_dotted)
+            measuredMoveLabel := label.new(bar_index + 32, measuredMoveTarget, "W5 TARGET\n" + str.tostring(measuredMoveTarget, format.mintick), 
+                 color=color.new(#FFD700, 80), textcolor=#FFD700, style=label.style_label_left, size=size.small)
+    else if sequenceDirection == -1 and not na(wave1Mag) and not na(w4EndPrice)
+        avgWaveMag = (wave1Mag + nz(wave3Mag, wave1Mag)) / 2
+        measuredMoveTarget := w4EndPrice - avgWaveMag * 0.786
+        if barstate.islast
+            measuredMoveLine := line.new(bar_index, measuredMoveTarget, bar_index + 30, measuredMoveTarget, 
+                 color=color.new(#FFD700, 40), width=2, style=line.style_dotted)
+            measuredMoveLabel := label.new(bar_index + 32, measuredMoveTarget, "W5 TARGET\n" + str.tostring(measuredMoveTarget, format.mintick), 
+                 color=color.new(#FFD700, 80), textcolor=#FFD700, style=label.style_label_left, size=size.small)
+waveInCurrentTrend := waveCount
+if not na(swingHigh) and lastSwingType != "HIGH"
+    latestSwingPrice := swingHigh
+    latestSwingType := "HIGH"
+    lastSwingType := "HIGH"
+    currentWaveStartBar := bar_index - swingLookback
+    currentWaveStartPrice := swingHigh
+    currentWaveDir := -1
+    currentWavePeakMomentum := 0.0
+if not na(swingLow) and lastSwingType != "LOW"
+    latestSwingPrice := swingLow
+    latestSwingType := "LOW"
+    lastSwingType := "LOW"
+    currentWaveStartBar := bar_index - swingLookback
+    currentWaveStartPrice := swingLow
+    currentWaveDir := 1
+    currentWavePeakMomentum := 0.0
+currentWaveIsUp = currentWaveDir == 1
+waveExhaustionBullish = waveExhausted and currentWaveDir == -1
+waveExhaustionBearish = waveExhausted and currentWaveDir == 1
+var line projLine618 = na
+var line projLine100 = na
+var line projLine162 = na
+var label projLabel618 = na
+var label projLabel100 = na
+var label projLabel162 = na
+float target618 = na
+float target100 = na
+float target162 = na
+if i_enableWaveEngine and currentWaveDir != 0 and not na(currentWaveStartBar)
+    baseProjection = atr * 2.0 
+    if array.size(completedWaves) >= 1
+        lastWave = array.get(completedWaves, array.size(completedWaves) - 1)
+        baseProjection := lastWave.magnitude
+        if array.size(completedWaves) >= 2
+            priorWave = array.get(completedWaves, array.size(completedWaves) - 2)
+            avgWaveMag = (lastWave.magnitude + priorWave.magnitude) / 2.0
+            lastWaveRatio = priorWave.magnitude > 0 ? lastWave.magnitude / priorWave.magnitude : 1.0
+            baseProjection := avgWaveMag
+            if lastWaveRatio > 1.3
+                baseProjection := baseProjection * 1.2
+            else if lastWaveRatio < 0.7
+                baseProjection := baseProjection * 0.8
+    momentumAdjust = 1.0 + (angularMomentum / 200)
+    momentumAdjust := math.max(0.7, math.min(1.5, momentumAdjust))
+    baseProjection := baseProjection * momentumAdjust
+    if currentWaveIsUp
+        target618 := currentWaveStartPrice + (baseProjection * 0.618)
+        target100 := currentWaveStartPrice + baseProjection
+        target162 := currentWaveStartPrice + (baseProjection * 1.618)
+    else
+        target618 := currentWaveStartPrice - (baseProjection * 0.618)
+        target100 := currentWaveStartPrice - baseProjection
+        target162 := currentWaveStartPrice - (baseProjection * 1.618)
+    if i_showProjections
+        projColor = currentWaveIsUp ? i_colorBull : i_colorBear
+        if not na(projLine618)
+            line.delete(projLine618)
+            line.delete(projLine100)
+            line.delete(projLine162)
+            label.delete(projLabel618)
+            label.delete(projLabel100)
+            label.delete(projLabel162)
+        projLine618 := line.new(currentWaveStartBar, target618, bar_index + 20, target618, color=color.new(projColor, 70), width=1, style=line.style_dotted)
+        projLine100 := line.new(currentWaveStartBar, target100, bar_index + 20, target100, color=color.new(projColor, 50), width=2, style=line.style_dashed)
+        projLine162 := line.new(currentWaveStartBar, target162, bar_index + 20, target162, color=color.new(projColor, 70), width=1, style=line.style_dotted)
+        projLabel618 := label.new(bar_index + 22, target618, "61.8%", color=color.new(projColor, 100), style=label.style_label_left, textcolor=projColor, size=size.tiny)
+        projLabel100 := label.new(bar_index + 22, target100, "100% (" + str.tostring(target100, format.mintick) + ")", color=color.new(projColor, 100), style=label.style_label_left, textcolor=projColor, size=size.small)
+        projLabel162 := label.new(bar_index + 22, target162, "161.8%", color=color.new(projColor, 100), style=label.style_label_left, textcolor=projColor, size=size.tiny)
+rangeBullSetup = isRangingRegime and atChannelBottom and waveExhaustionBullish
+nearRangeBullSetup = isRangingRegime and nearChannelBottom and (waveExhaustionBullish or bullDivergence)
+compressionBullSetup = marketRegime == "COMPRESSION" and channel_position < 0.3 and mpiTurningBull
+rangeBearSetup = isRangingRegime and atChannelTop and waveExhaustionBearish
+nearRangeBearSetup = isRangingRegime and nearChannelTop and (waveExhaustionBearish or bearDivergence)
+compressionBearSetup = marketRegime == "COMPRESSION" and channel_position > 0.7 and mpiTurningBear
+hiddenBullGem = rangeBullSetup or nearRangeBullSetup or compressionBullSetup
+hiddenBearGem = rangeBearSetup or nearRangeBearSetup or compressionBearSetup
+rangeSetupQuality = 0.0
+if isRangingRegime
+    edgeDistance = math.abs(channel_position - 0.5)
+    rangeSetupQuality := edgeDistance * 2.0
+    if waveExhaustionBullish or waveExhaustionBearish
+        rangeSetupQuality := rangeSetupQuality + 0.3
+    if bullDivergence or bearDivergence
+        rangeSetupQuality := rangeSetupQuality + 0.2
+    if mpiTurningBull or mpiTurningBear
+        rangeSetupQuality := rangeSetupQuality + 0.2
+    rangeSetupQuality := math.min(1.5, rangeSetupQuality)
+chopRegime = marketRegime == "STRONG_TREND" ? "STRONG TREND" : marketRegime == "TRENDING" ? "TRENDING" : marketRegime == "COMPRESSION" ? "COMPRESSION" : marketRegime == "RANGING" ? "RANGING" : marketRegime == "TRANSITIONING" ? "TRANSITIONING" : "WEAK TREND"
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔄 MARKET STRUCTURE
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+var float lastSwingHigh = na
+var float lastSwingLow = na
+if not na(swingHigh)
+    lastSwingHigh := swingHigh
+if not na(swingLow)
+    lastSwingLow := swingLow
+bullBOS_raw = i_enableChoch and not na(lastSwingHigh) and close > lastSwingHigh and close[1] <= lastSwingHigh and relativeVolume >= 1.0
+bearBOS_raw = i_enableChoch and not na(lastSwingLow) and close < lastSwingLow and close[1] >= lastSwingLow and relativeVolume >= 1.0
+var int lastBullBosBar = 0
+var int lastBearBosBar = 0
+bullBOS = bullBOS_raw and (bar_index - lastBullBosBar > i_chochCooldown)
+bearBOS = bearBOS_raw and (bar_index - lastBearBosBar > i_chochCooldown)
+if bullBOS
+    lastBullBosBar := bar_index
+if bearBOS
+    lastBearBosBar := bar_index
+var string marketStructure = "RANGING"
+if bullBOS
+    marketStructure := "BULLISH"
+else if bearBOS
+    marketStructure := "BEARISH"
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📐 STRUCTURE LINES (BOS/CHoCH)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+type StructureLine
+    line ln
+    label lbl
+    float price
+    bool isBull
+    int startBar
+    bool active
+    bool broken
+var array<StructureLine> structureLines = array.new<StructureLine>()
+if i_enableSMC and i_showStructure and barstate.isconfirmed
+    if bullBOS
+        col = i_colorBull
+        ln = line.new(bar_index, lastSwingHigh, bar_index + 50, lastSwingHigh, color=col, width=2, style=line.style_solid)
+        lbl = label.new(bar_index + 50, lastSwingHigh, "◀ BOS", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny)
+        array.push(structureLines, StructureLine.new(ln, lbl, lastSwingHigh, true, bar_index, true, false))
+    if bearBOS
+        col = i_colorBear
+        ln = line.new(bar_index, lastSwingLow, bar_index + 50, lastSwingLow, color=col, width=2, style=line.style_solid)
+        lbl = label.new(bar_index + 50, lastSwingLow, "◀ BOS", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny)
+        array.push(structureLines, StructureLine.new(ln, lbl, lastSwingLow, false, bar_index, true, false))
+if array.size(structureLines) > 0
+    for i = array.size(structureLines) - 1 to 0
+        s = array.get(structureLines, i)
+        expired = bar_index - s.startBar > i_structureLen * 3
+        if s.active and not s.broken
+            priceBreak = (s.isBull and close < s.price) or (not s.isBull and close > s.price)
+            if priceBreak
+                s.broken := true
+                s.active := false
+                line.set_color(s.ln, color.new(color.gray, 70))
+                line.set_style(s.ln, line.style_dotted)
+                line.set_width(s.ln, 1)
+                line.set_x2(s.ln, bar_index)
+                label.delete(s.lbl)
+        if s.active and not s.broken
+            line.set_x2(s.ln, bar_index + 15)
+            label.set_x(s.lbl, bar_index + 15)
+        if expired
+            line.delete(s.ln)
+            if not s.broken  
+                label.delete(s.lbl)
+            array.remove(structureLines, i)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🏦 ORDER BLOCKS 
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+type OrderBlock
+    box bx
+    label lbl
+    line topLine
+    line botLine
+    float top
+    float bot
+    bool isBull
+    int startBar
+    int touchBar
+    bool broken  
+    bool isBreaker 
+var array<OrderBlock> orderBlocks = array.new<OrderBlock>()
+displacement = math.abs(close - open) / atr
+if i_enableSMC and i_showOB and barstate.isconfirmed
+    if close > open and displacement >= i_minDisplacement and close[1] < open[1] and volumeStrong
+        obTop = high[1]
+        obBot = low[1]
+        col = i_colorBull
+        topLn = line.new(bar_index - 1, obTop, bar_index + 50, obTop, color=col, width=1, style=line.style_solid)
+        botLn = line.new(bar_index - 1, obBot, bar_index + 50, obBot, color=col, width=1, style=line.style_dashed)
+        bx = box.new(bar_index - 1, obTop, bar_index + 50, obBot, border_color=color.new(col, 70), bgcolor=color.new(col, i_obTransparency))
+        lbl = i_labelOBFVG ? label.new(bar_index + 50, obTop, "◀ OB", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny) : na
+        array.push(orderBlocks, OrderBlock.new(bx, lbl, topLn, botLn, obTop, obBot, true, bar_index - 1, na, false, false))
+    if close < open and displacement >= i_minDisplacement and close[1] > open[1] and volumeStrong
+        obTop = high[1]
+        obBot = low[1]
+        col = i_colorBear
+        topLn = line.new(bar_index - 1, obTop, bar_index + 50, obTop, color=col, width=1, style=line.style_dashed)
+        botLn = line.new(bar_index - 1, obBot, bar_index + 50, obBot, color=col, width=1, style=line.style_solid)
+        bx = box.new(bar_index - 1, obTop, bar_index + 50, obBot, border_color=color.new(col, 70), bgcolor=color.new(col, i_obTransparency))
+        lbl = i_labelOBFVG ? label.new(bar_index + 50, obBot, "◀ OB", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny) : na
+        array.push(orderBlocks, OrderBlock.new(bx, lbl, topLn, botLn, obTop, obBot, false, bar_index - 1, na, false, false))
+bool inBullOB = false
+bool inBearOB = false
+bool inBullBreaker = false
+bool inBearBreaker = false
+var int lastBullOBTouch = na
+var int lastBearOBTouch = na
+if array.size(orderBlocks) > 0
+    for i = array.size(orderBlocks) - 1 to 0
+        ob = array.get(orderBlocks, i)
+        expired = bar_index - ob.startBar > i_obMaxAge * 2
+        if not ob.broken
+            broken = (ob.isBull and close < ob.bot) or (not ob.isBull and close > ob.top)
+            if broken
+                ob.broken := true
+                if i_enableBreakers
+                    ob.isBreaker := true
+                    box.set_bgcolor(ob.bx, color.new(i_colorBreaker, i_breakerTransparency))
+                    box.set_border_color(ob.bx, color.new(i_colorBreaker, 50))
+                    box.set_right(ob.bx, bar_index + i_breakerExtend)
+                    line.set_color(ob.topLine, color.new(i_colorBreaker, 40))
+                    line.set_color(ob.botLine, color.new(i_colorBreaker, 40))
+                    line.set_style(ob.topLine, line.style_solid)
+                    line.set_style(ob.botLine, line.style_solid)
+                    line.set_width(ob.topLine, 2)
+                    line.set_width(ob.botLine, 2)
+                    line.set_x2(ob.topLine, bar_index + i_breakerExtend)
+                    line.set_x2(ob.botLine, bar_index + i_breakerExtend)
+                    if not na(ob.lbl)
+                        label.set_text(ob.lbl, "◀ BRK")
+                        label.set_textcolor(ob.lbl, i_colorBreaker)
+                        label.set_x(ob.lbl, bar_index + i_breakerExtend)
+                else
+                    box.set_bgcolor(ob.bx, color.new(color.gray, 92))
+                    box.set_border_color(ob.bx, color.new(color.gray, 80))
+                    box.set_right(ob.bx, bar_index)
+                    line.set_color(ob.topLine, color.new(color.gray, 70))
+                    line.set_color(ob.botLine, color.new(color.gray, 70))
+                    line.set_style(ob.topLine, line.style_dotted)
+                    line.set_style(ob.botLine, line.style_dotted)
+                    line.set_x2(ob.topLine, bar_index)
+                    line.set_x2(ob.botLine, bar_index)
+                    if not na(ob.lbl)
+                        label.delete(ob.lbl)
+                        ob.lbl := na
+        if expired
+            box.delete(ob.bx)
+            line.delete(ob.topLine)
+            line.delete(ob.botLine)
+            if not na(ob.lbl)
+                label.delete(ob.lbl)
+            array.remove(orderBlocks, i)
+        else
+            if not ob.broken or (i_enableBreakers and ob.isBreaker)
+                extension = (ob.isBreaker) ? i_breakerExtend : 15
+                extendTo = (ob.isBreaker) ? bar_index + extension : bar_index + 15
+                box.set_right(ob.bx, extendTo)
+                line.set_x2(ob.topLine, extendTo)
+                line.set_x2(ob.botLine, extendTo)
+                if not na(ob.lbl)
+                    label.set_x(ob.lbl, extendTo)
+            if low <= ob.top and high >= ob.bot
+                if ob.isBreaker and i_enableBreakers
+                    if ob.isBull 
+                        inBearBreaker := true
+                    else 
+                        inBullBreaker := true
+                else if not ob.broken
+                    if ob.isBull
+                        inBullOB := true
+                        lastBullOBTouch := bar_index
+                        if na(ob.touchBar)
+                            ob.touchBar := bar_index
+                    else
+                        inBearOB := true
+                        lastBearOBTouch := bar_index
+                        if na(ob.touchBar)
+                            ob.touchBar := bar_index
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📦 FAIR VALUE GAPS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+type FVG
+    box bx
+    label lbl
+    float top
+    float bot
+    bool isBull
+    int startBar
+    int touchBar
+    bool filled 
+var array<FVG> fvgArray = array.new<FVG>()
+bullFVG = low > high[2] and (low - high[2]) >= atr * i_fvgMinSize
+bearFVG = high < low[2] and (low[2] - high) >= atr * i_fvgMinSize
+if i_enableSMC and i_showFVG and barstate.isconfirmed
+    if bullFVG
+        fvgTop = low
+        fvgBot = high[2]
+        col = i_colorFVG
+        bx = box.new(bar_index - 2, fvgTop, bar_index + 50, fvgBot, border_color=color.new(col, 50), bgcolor=color.new(col, i_obTransparency + 2), border_style=line.style_dotted)
+        lbl = i_labelOBFVG ? label.new(bar_index + 50, fvgTop, "◀ FVG", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny) : na
+        array.push(fvgArray, FVG.new(bx, lbl, fvgTop, fvgBot, true, bar_index, na, false))
+    if bearFVG
+        fvgTop = low[2]
+        fvgBot = high
+        col = i_colorFVG
+        bx = box.new(bar_index - 2, fvgTop, bar_index + 50, fvgBot, border_color=color.new(col, 50), bgcolor=color.new(col, i_obTransparency + 2), border_style=line.style_dotted)
+        lbl = i_labelOBFVG ? label.new(bar_index + 50, fvgBot, "◀ FVG", color=color.new(col, 100), style=label.style_label_left, textcolor=col, size=size.tiny) : na
+        array.push(fvgArray, FVG.new(bx, lbl, fvgTop, fvgBot, false, bar_index, na, false))
+bool inBullFVG = false
+bool inBearFVG = false
+var int lastBullFVGTouch = na
+var int lastBearFVGTouch = na
+if array.size(fvgArray) > 0
+    for i = array.size(fvgArray) - 1 to 0
+        fvg = array.get(fvgArray, i)
+        expired = bar_index - fvg.startBar > i_fvgMaxAge * 2
+        if not fvg.filled
+            filled = (fvg.isBull and low <= fvg.bot) or (not fvg.isBull and high >= fvg.top)
+            if filled
+                fvg.filled := true
+                box.set_bgcolor(fvg.bx, color.new(color.gray, 92))
+                box.set_border_color(fvg.bx, color.new(color.gray, 70))
+                box.set_right(fvg.bx, bar_index)
+                if not na(fvg.lbl)
+                    label.delete(fvg.lbl)
+                    fvg.lbl := na
+        if expired
+            box.delete(fvg.bx)
+            if not na(fvg.lbl)
+                label.delete(fvg.lbl)
+            array.remove(fvgArray, i)
+        else
+            if not fvg.filled
+                box.set_right(fvg.bx, bar_index + 15)
+                if not na(fvg.lbl)
+                    label.set_x(fvg.lbl, bar_index + 15)
+            if fvg.isBull and low <= fvg.top and high >= fvg.bot and not fvg.filled
+                inBullFVG := true
+                lastBullFVGTouch := bar_index
+                if na(fvg.touchBar)
+                    fvg.touchBar := bar_index
+            if not fvg.isBull and high >= fvg.bot and low <= fvg.top and not fvg.filled
+                inBearFVG := true
+                lastBearFVGTouch := bar_index
+                if na(fvg.touchBar)
+                    fvg.touchBar := bar_index
+momentumPercentile = ta.percentile_linear_interpolation(currentMomentum, i_percentileLookback, i_percentileThreshold)
+isTopMomentum = i_usePercentile ? currentMomentum >= momentumPercentile : true
+volumePercentile75 = ta.percentile_linear_interpolation(volume, i_percentileLookback, 75)
+isStrongVolume = volume >= volumePercentile75
+mpiPercentile = ta.percentile_linear_interpolation(math.abs(normalizedMPI), i_percentileLookback, 70)
+isStrongMPI = math.abs(normalizedMPI) >= mpiPercentile
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🎯 SIGNAL SYNTHESIS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+var int barsAboveRibbon = 0, var int barsBelowRibbon = 0, var int barsInRibbon = 0
+if close > ribbonTop
+    barsAboveRibbon += 1
+    barsBelowRibbon := 0
+    barsInRibbon := 0
+else if close < ribbonBot
+    barsBelowRibbon += 1
+    barsAboveRibbon := 0
+    barsInRibbon := 0
+else
+    barsInRibbon += 1
+    if barsInRibbon > 5
+        barsAboveRibbon := math.max(0, barsAboveRibbon - 1)
+        barsBelowRibbon := math.max(0, barsBelowRibbon - 1)
+phaseBull = barsAboveRibbon >= 3 or (barsAboveRibbon[5] >= 3 and barsInRibbon > 0 and barsInRibbon <= 5)
+phaseBear = barsBelowRibbon >= 3 or (barsBelowRibbon[5] >= 3 and barsInRibbon > 0 and barsInRibbon <= 5)
+wasAboveRibbon = ta.highest(close, 10) > ribbonTop + atr * 0.5
+wasBelowRibbon = ta.lowest(close, 10) < ribbonBot - atr * 0.5
+pullbackFromAbove = wasAboveRibbon and close <= ribbonTop and close >= ribbonBot
+pullbackFromBelow = wasBelowRibbon and close >= ribbonBot and close <= ribbonTop
+inRibbonZone = close >= ribbonBot - atr * 0.2 and close <= ribbonTop + atr * 0.2
+idealLongZone = close <= ribbonMid + atr * 0.5 and close >= ribbonBot - atr * 0.2
+idealShortZone = close >= ribbonMid - atr * 0.5 and close <= ribbonTop + atr * 0.2
+bodySize = math.abs(close - open)
+upperWick = high - math.max(close, open)
+lowerWick = math.min(close, open) - low
+totalRange = high - low
+hasBullWick = totalRange > 0 and lowerWick / totalRange >= 0.25 and lowerWick > atr * 0.15
+hasBearWick = totalRange > 0 and upperWick / totalRange >= 0.25 and upperWick > atr * 0.15
+strongBullCandle = close > open and bodySize >= atr * 0.3
+strongBearCandle = close < open and bodySize >= atr * 0.3
+bullCandleOK = close > open or hasBullWick
+bearCandleOK = close < open or hasBearWick
+notExtendedLong = close < ribbonTop + atr * 2.0
+notExtendedShort = close > ribbonBot - atr * 2.0
+recentBullOBTouch = not na(lastBullOBTouch) and (bar_index - lastBullOBTouch) <= 5
+recentBearOBTouch = not na(lastBearOBTouch) and (bar_index - lastBearOBTouch) <= 5
+recentBullFVGTouch = not na(lastBullFVGTouch) and (bar_index - lastBullFVGTouch) <= 5
+recentBearFVGTouch = not na(lastBearFVGTouch) and (bar_index - lastBearFVGTouch) <= 5
+bullInstitutional = recentBullOBTouch or recentBullFVGTouch or inBullOB or inBullFVG
+bearInstitutional = recentBearOBTouch or recentBearFVGTouch or inBearOB or inBearFVG
+confluenceLong = 0
+confluenceShort = 0
+if strictBullStack
+    confluenceLong += 3
+else if bullishStack
+    confluenceLong += 2
+if strictBearStack
+    confluenceShort += 3
+else if bearishStack
+    confluenceShort += 2
+if marketStructure == "BULLISH"
+    confluenceLong += 2
+if marketStructure == "BEARISH"
+    confluenceShort += 2
+if idealLongZone and discountZone
+    confluenceLong += 3
+else if idealLongZone or discountZone
+    confluenceLong += 2
+else if inRibbonZone
+    confluenceLong += 1
+if idealShortZone and premiumZone
+    confluenceShort += 3
+else if idealShortZone or premiumZone
+    confluenceShort += 2
+else if inRibbonZone
+    confluenceShort += 1
+if mpiTurningBull and mpiBullish
+    confluenceLong += 2
+else if mpiTurningBull or mpiBullish
+    confluenceLong += 1
+if mpiTurningBear and mpiBearish
+    confluenceShort += 2
+else if mpiTurningBear or mpiBearish
+    confluenceShort += 1
+if bullInstitutional and (inBullOB or recentBullOBTouch)
+    confluenceLong += 3
+else if bullInstitutional
+    confluenceLong += 2
+if bearInstitutional and (inBearOB or recentBearOBTouch)
+    confluenceShort += 3
+else if bearInstitutional
+    confluenceShort += 2
+if i_enableBreakers and inBullBreaker
+    confluenceLong += i_breakerBoost
+if i_enableBreakers and inBearBreaker
+    confluenceShort += i_breakerBoost
+if bullDivergence
+    confluenceLong += 2
+if bearDivergence
+    confluenceShort += 2
+if i_useWaveExhaustion and waveExhaustionBullish and momentumDecayPct > 30
+    confluenceLong += 3
+else if waveExhaustionBullish
+    confluenceLong += 2
+if i_useWaveExhaustion and waveExhaustionBearish and momentumDecayPct > 30
+    confluenceShort += 3
+else if waveExhaustionBearish
+    confluenceShort += 2
+if hasBullWick and strongBullCandle
+    confluenceLong += 2
+else if hasBullWick or strongBullCandle
+    confluenceLong += 1
+if hasBearWick and strongBearCandle
+    confluenceShort += 2
+else if hasBearWick or strongBearCandle
+    confluenceShort += 1
+if volumeStrong
+    confluenceLong += 1
+    confluenceShort += 1
+if angularVelocity > 1 and smoothedAngle > 10
+    confluenceLong += 1
+if angularVelocity < -1 and smoothedAngle < -10
+    confluenceShort += 1
+if i_enableHTF and htfBias > 0
+    confluenceLong += 2
+if i_enableHTF and htfBias < 0
+    confluenceShort += 2
+if isTrendingRegime
+    confluenceLong += 1
+    confluenceShort += 1
+if hiddenBullGem
+    confluenceLong += 4
+if hiddenBearGem
+    confluenceShort += 4
+if isRangingRegime and nearChannelBottom and (bullDivergence or mpiTurningBull)
+    confluenceLong += 2
+if isRangingRegime and nearChannelTop and (bearDivergence or mpiTurningBear)
+    confluenceShort += 2
+if marketRegime == "COMPRESSION" and waveExhaustionBullish
+    confluenceLong += 2
+if marketRegime == "COMPRESSION" and waveExhaustionBearish
+    confluenceShort += 2
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌊 WAVE-ENHANCED CONFLUENCE SCORING
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+isWaveEntryZone = inActiveSequence and (waveCount == 2 or waveCount == 4)
+isWave3Breakout = inActiveSequence and waveCount == 3
+isWave5Caution = inActiveSequence and waveCount == 5
+if isWaveEntryZone and sequenceDirection == 1
+    confluenceLong += 3
+if isWaveEntryZone and sequenceDirection == -1 
+    confluenceShort += 3
+if isWave3Breakout and sequenceDirection == 1 and waveQuality_Healthy
+    confluenceLong += 2
+if isWave3Breakout and sequenceDirection == -1 and waveQuality_Healthy
+    confluenceShort += 2
+if waveQuality_Strong and sequenceDirection == 1  
+    confluenceLong += 2
+if waveQuality_Strong and sequenceDirection == -1
+    confluenceShort += 2
+if waveQuality_Healthy and not waveQuality_Strong and sequenceDirection == 1 
+    confluenceLong += 1
+if waveQuality_Healthy and not waveQuality_Strong and sequenceDirection == -1
+    confluenceShort += 1
+if waveQuality_Weak and sequenceDirection == 1
+    confluenceLong -= 2
+if waveQuality_Weak and sequenceDirection == -1
+    confluenceShort -= 2
+if isWave5Caution and sequenceDirection == 1
+    confluenceLong -= 2  
+if isWave5Caution and sequenceDirection == -1
+    confluenceShort -= 2  
+if waveQuality_Exhausting and sequenceDirection == 1
+    confluenceLong -= 3
+    confluenceShort += 2 
+if waveQuality_Exhausting and sequenceDirection == -1
+    confluenceShort -= 3
+    confluenceLong += 2  
+if not na(channelPosition)
+    if channelPosition <= 20 
+        confluenceLong += 2
+    else if channelPosition <= 35 
+        confluenceLong += 1
+    if channelPosition >= 80  
+        confluenceShort += 2
+    else if channelPosition >= 65  
+        confluenceShort += 1
+if trendHealthScore >= 70
+    if sequenceDirection == 1
+        confluenceLong += 2
+    else if sequenceDirection == -1
+        confluenceShort += 2
+else if trendHealthScore <= 30
+    if sequenceDirection == 1
+        confluenceShort += 1
+    else if sequenceDirection == -1
+        confluenceLong += 1
+if i_enableMTFMapping and i_microBreakBoost
+    if macroStructureDir == 1 and bullBOS
+        confluenceLong += 2
+    if macroStructureDir == -1 and bearBOS
+        confluenceShort += 2
+confluenceLong := math.max(0, confluenceLong)
+confluenceShort := math.max(0, confluenceShort)
+maxConfluence = 35.0  
+scoreLong = (confluenceLong / maxConfluence) * 100
+scoreShort = (confluenceShort / maxConfluence) * 100
+gradeLong = scoreLong >= 70 ? "A+" : scoreLong >= 55 ? "A" : scoreLong >= 40 ? "B" : "C"
+gradeShort = scoreShort >= 70 ? "A+" : scoreShort >= 55 ? "A" : scoreShort >= 40 ? "B" : "C"
+minGradeNum = f_gradeToNum(i_minGrade)
+longGradePass = f_gradeToNum(gradeLong) >= minGradeNum
+shortGradePass = f_gradeToNum(gradeShort) >= minGradeNum
+var bool tradeLocked = false, var int lockStartBar = 0
+if tradeLocked and bar_index - lockStartBar >= i_tradeLockBars
+    tradeLocked := false
+pullbackConditionLong = i_requirePullback ? (pullbackFromAbove or inRibbonZone) : true
+pullbackConditionShort = i_requirePullback ? (pullbackFromBelow or inRibbonZone) : true
+var int consecLosses = 0
+lossProtectionActive = i_enableLossProtect and consecLosses >= i_maxConsecLosses
+htfAlignedLong = not i_enableHTF or not i_requireHTFAlign or htfBias > 0 
+htfAlignedShort = not i_enableHTF or not i_requireHTFAlign or htfBias < 0 
+structureAlignedLong = not i_requireHTFAlign or inBullishStructure or not inBearishStructure  
+structureAlignedShort = not i_requireHTFAlign or inBearishStructure or not inBullishStructure  
+macroAlignedLong = not i_enableMTFMapping or not i_requireMacroAlign or macroStructureDir >= 0
+macroAlignedShort = not i_enableMTFMapping or not i_requireMacroAlign or macroStructureDir <= 0
+filtersPassLong = not isChopZone and sessionAllowed and not lossProtectionActive and htfAlignedLong and structureAlignedLong and macroAlignedLong
+filtersPassShort = not isChopZone and sessionAllowed and not lossProtectionActive and htfAlignedShort and structureAlignedShort and macroAlignedShort
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🌊 WAVE-BASED SIGNAL FILTERS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+bool wave5AvoidLong = i_avoidWave5 and isWave5Caution and sequenceDirection == 1
+bool wave5AvoidShort = i_avoidWave5 and isWave5Caution and sequenceDirection == -1  
+bool channelOKLong = not i_useChannelFilter or na(channelPosition) or channelPosition <= 60  
+bool channelOKShort = not i_useChannelFilter or na(channelPosition) or channelPosition >= 40  
+bool inBullishWaveEntry = i_useWaveEntryZones and isWaveEntryZone and sequenceDirection == 1
+bool inBearishWaveEntry = i_useWaveEntryZones and isWaveEntryZone and sequenceDirection == -1
+filtersPassLong := filtersPassLong and not wave5AvoidLong and channelOKLong
+filtersPassShort := filtersPassShort and not wave5AvoidShort and channelOKShort
+longStrict = (strictBullStack or (bullishStack and marketStructure == "BULLISH")) and idealLongZone and pullbackConditionLong and (mpiTurningBull or (mpiBullish and bullDivergence) or waveExhaustionBullish) and strongBullCandle and notExtendedLong and volumeStrong and confluenceLong >= i_minConfluence and longGradePass and not tradeLocked and filtersPassLong
+shortStrict = (strictBearStack or (bearishStack and marketStructure == "BEARISH")) and idealShortZone and pullbackConditionShort and (mpiTurningBear or (mpiBearish and bearDivergence) or waveExhaustionBearish) and strongBearCandle and notExtendedShort and volumeStrong and confluenceShort >= i_minConfluence and shortGradePass and not tradeLocked and filtersPassShort
+longWaveEntry = inBullishWaveEntry and (bullishStack or phaseBull) and bullCandleOK and notExtendedLong and waveQuality_Healthy and confluenceLong >= i_minConfluence and not tradeLocked and filtersPassLong
+shortWaveEntry = inBearishWaveEntry and (bearishStack or phaseBear) and bearCandleOK and notExtendedShort and waveQuality_Healthy and confluenceShort >= i_minConfluence and not tradeLocked and filtersPassShort
+longBalancedTrend = isTrendingRegime and (bullishStack or phaseBull) and (idealLongZone or inRibbonZone) and (mpiSupportsBull or waveExhaustionBullish or bullDivergence) and bullCandleOK and notExtendedLong and volumeModerate
+longBalancedRange = isRangingRegime and nearChannelBottom and (waveExhaustionBullish or bullDivergence or mpiTurningBull) and bullCandleOK
+longBalancedGem = hiddenBullGem
+longBalanced = ((longBalancedTrend or longBalancedRange or longBalancedGem or longWaveEntry) and confluenceLong >= i_minConfluence and longGradePass and not tradeLocked and filtersPassLong) or (hiddenBullGem and confluenceLong >= (i_minConfluence - 2) and not tradeLocked and filtersPassLong)
+shortBalancedTrend = isTrendingRegime and (bearishStack or phaseBear) and (idealShortZone or inRibbonZone) and (mpiSupportsBear or waveExhaustionBearish or bearDivergence) and bearCandleOK and notExtendedShort and volumeModerate
+shortBalancedRange = isRangingRegime and nearChannelTop and (waveExhaustionBearish or bearDivergence or mpiTurningBear) and bearCandleOK
+shortBalancedGem = hiddenBearGem
+shortBalanced = ((shortBalancedTrend or shortBalancedRange or shortBalancedGem or shortWaveEntry) and confluenceShort >= i_minConfluence and shortGradePass and not tradeLocked and filtersPassShort) or (hiddenBearGem and confluenceShort >= (i_minConfluence - 2) and not tradeLocked and filtersPassShort)
+longAggressive = ((bullishStack or phaseBull or (inRibbonZone and close > ema21) or nearChannelBottom or inBullishWaveEntry) and (idealLongZone or inRibbonZone or discountZone or nearChannelBottom) and bullCandleOK and notExtendedLong and confluenceLong >= i_minConfluence and longGradePass and not tradeLocked and filtersPassLong) or (hiddenBullGem and not tradeLocked and filtersPassLong)
+shortAggressive = ((bearishStack or phaseBear or (inRibbonZone and close < ema21) or nearChannelTop or inBearishWaveEntry) and (idealShortZone or inRibbonZone or premiumZone or nearChannelTop) and bearCandleOK and notExtendedShort and confluenceShort >= i_minConfluence and shortGradePass and not tradeLocked and filtersPassShort) or (hiddenBearGem and not tradeLocked and filtersPassShort)
+longCore = i_signalMode == "Strict" ? longStrict : i_signalMode == "Balanced" ? longBalanced : longAggressive
+shortCore = i_signalMode == "Strict" ? shortStrict : i_signalMode == "Balanced" ? shortBalanced : shortAggressive
+longCore := longCore and isTopMomentum
+shortCore := shortCore and isTopMomentum
+if i_institutionalMode
+    longCore := longCore and bullInstitutional
+    shortCore := shortCore and bearInstitutional
+buySignal = longCore and not longCore[1]
+sellSignal = shortCore and not shortCore[1]
+if buySignal or sellSignal
+    tradeLocked := true
+    lockStartBar := bar_index
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 💼 TRADE MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+var bool inLong = false, var bool inShort = false
+var float entryPrice = na, var float slPrice = na
+var float tp1Price = na, var float tp2Price = na, var float tp3Price = na
+var int tradeStartBar = na
+var string tradeType = "NONE"
+var line l_entry = na, var line l_sl = na
+var line l_tp1 = na, var line l_tp2 = na, var line l_tp3 = na
+var label lbl_entry = na, var label lbl_sl = na
+var label lbl_tp1 = na, var label lbl_tp2 = na, var label lbl_tp3 = na
+var bool t1Hit = false, var bool t2Hit = false, var bool t3Hit = false, var bool stopHit = false
+var int t1HitBar = na, var int t2HitBar = na, var int t3HitBar = na, var int stopHitBar = na
+var int totalTrades = 0
+var int tp1Wins = 0, var int tp2Wins = 0, var int tp3Wins = 0
+var int stopLosses = 0
+var int timeouts = 0
+var float sumR = 0.0
+var float sumWinR = 0.0
+var float sumLossR = 0.0
+var int winCount = 0
+var int lossCount = 0
+var float currentMAE = 0.0
+var float currentMFE = 0.0
+var float sumMAE = 0.0
+var float sumMFE = 0.0
+var int bucket40_49_total = 0, var int bucket40_49_wins = 0
+var int bucket50_59_total = 0, var int bucket50_59_wins = 0
+var int bucket60_69_total = 0, var int bucket60_69_wins = 0
+var int bucket70_plus_total = 0, var int bucket70_plus_wins = 0
+var float tradeConfluenceScore = 0.0
+var int asiaTotal = 0, var int asiaWins = 0
+var int londonTotal = 0, var int londonWins = 0
+var int nyTotal = 0, var int nyWins = 0
+var string tradeSession = ""
+var int currentStreak = 0
+var int maxWinStreak = 0
+var int maxLossStreak = 0
+f_deleteTradeVisuals() =>
+    line.delete(l_entry)
+    line.delete(l_sl)
+    line.delete(l_tp1)
+    line.delete(l_tp2)
+    line.delete(l_tp3)
+    label.delete(lbl_entry)
+    label.delete(lbl_sl)
+    label.delete(lbl_tp1)
+    label.delete(lbl_tp2)
+    label.delete(lbl_tp3)
+f_getSwingSL(isLong) =>
+    if i_useSwingSL
+        if isLong and array.size(swingLowPrices) > 0
+            swingSL = array.get(swingLowPrices, 0)
+            math.min(swingSL - atr * 0.2, close - atr * i_stopATR)
+        else if not isLong and array.size(swingHighPrices) > 0
+            swingSL = array.get(swingHighPrices, 0)
+            math.max(swingSL + atr * 0.2, close + atr * i_stopATR)
+        else
+            isLong ? close - atr * i_stopATR : close + atr * i_stopATR
+    else
+        isLong ? close - atr * i_stopATR : close + atr * i_stopATR
+if buySignal
+    f_deleteTradeVisuals()
+    inLong := true
+    inShort := false
+    entryPrice := close
+    slPrice := f_getSwingSL(true)
+    riskSize = math.abs(entryPrice - slPrice)
+    tp1Price := entryPrice + riskSize * i_tp1Mult
+    tp2Price := entryPrice + riskSize * i_tp2Mult
+    tp3Price := entryPrice + riskSize * i_tp3Mult
+    tradeType := "LONG"
+    tradeStartBar := bar_index
+    t1Hit := false
+    t2Hit := false
+    t3Hit := false
+    stopHit := false
+    currentMAE := 0.0
+    currentMFE := 0.0
+    tradeConfluenceScore := scoreLong
+    tradeSession := currentSession
+    if i_showTargetLines
+        l_entry := line.new(bar_index, entryPrice, bar_index + 20, entryPrice, color=color.white, style=line.style_dotted, width=1)
+        l_sl := line.new(bar_index, slPrice, bar_index + 20, slPrice, color=color.red, width=2)
+        l_tp1 := line.new(bar_index, tp1Price, bar_index + 20, tp1Price, color=color.green, style=line.style_dashed, width=1)
+        l_tp2 := line.new(bar_index, tp2Price, bar_index + 20, tp2Price, color=color.new(color.green, 30), style=line.style_dashed, width=1)
+        l_tp3 := line.new(bar_index, tp3Price, bar_index + 20, tp3Price, color=color.new(color.green, 50), style=line.style_dashed, width=1)
+    if i_showTargetLabels
+        lbl_entry := label.new(bar_index + 20, entryPrice, "ENTRY " + str.tostring(entryPrice, format.mintick), color=color.new(color.white, 100), style=label.style_label_left, textcolor=color.white, size=size.small)
+        lbl_sl := label.new(bar_index + 20, slPrice, "SL " + str.tostring(slPrice, format.mintick), color=color.new(color.red, 100), style=label.style_label_left, textcolor=color.red, size=size.small)
+        lbl_tp1 := label.new(bar_index + 20, tp1Price, "TP1 " + str.tostring(tp1Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.green, size=size.small)
+        lbl_tp2 := label.new(bar_index + 20, tp2Price, "TP2 " + str.tostring(tp2Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.new(color.green, 30), size=size.small)
+        lbl_tp3 := label.new(bar_index + 20, tp3Price, "TP3 " + str.tostring(tp3Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.new(color.green, 50), size=size.small)
+if sellSignal
+    f_deleteTradeVisuals()
+    inShort := true
+    inLong := false
+    entryPrice := close
+    slPrice := f_getSwingSL(false)
+    riskSize = math.abs(slPrice - entryPrice)
+    tp1Price := entryPrice - riskSize * i_tp1Mult
+    tp2Price := entryPrice - riskSize * i_tp2Mult
+    tp3Price := entryPrice - riskSize * i_tp3Mult
+    tradeType := "SHORT"
+    tradeStartBar := bar_index
+    t1Hit := false
+    t2Hit := false
+    t3Hit := false
+    stopHit := false
+    currentMAE := 0.0
+    currentMFE := 0.0
+    tradeConfluenceScore := scoreShort
+    tradeSession := currentSession
+    if i_showTargetLines
+        l_entry := line.new(bar_index, entryPrice, bar_index + 20, entryPrice, color=color.white, style=line.style_dotted, width=1)
+        l_sl := line.new(bar_index, slPrice, bar_index + 20, slPrice, color=color.red, width=2)
+        l_tp1 := line.new(bar_index, tp1Price, bar_index + 20, tp1Price, color=color.green, style=line.style_dashed, width=1)
+        l_tp2 := line.new(bar_index, tp2Price, bar_index + 20, tp2Price, color=color.new(color.green, 30), style=line.style_dashed, width=1)
+        l_tp3 := line.new(bar_index, tp3Price, bar_index + 20, tp3Price, color=color.new(color.green, 50), style=line.style_dashed, width=1)
+    if i_showTargetLabels
+        lbl_entry := label.new(bar_index + 20, entryPrice, "ENTRY " + str.tostring(entryPrice, format.mintick), color=color.new(color.white, 100), style=label.style_label_left, textcolor=color.white, size=size.small)
+        lbl_sl := label.new(bar_index + 20, slPrice, "SL " + str.tostring(slPrice, format.mintick), color=color.new(color.red, 100), style=label.style_label_left, textcolor=color.red, size=size.small)
+        lbl_tp1 := label.new(bar_index + 20, tp1Price, "TP1 " + str.tostring(tp1Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.green, size=size.small)
+        lbl_tp2 := label.new(bar_index + 20, tp2Price, "TP2 " + str.tostring(tp2Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.new(color.green, 30), size=size.small)
+        lbl_tp3 := label.new(bar_index + 20, tp3Price, "TP3 " + str.tostring(tp3Price, format.mintick), color=color.new(color.green, 100), style=label.style_label_left, textcolor=color.new(color.green, 50), size=size.small)
+var bool tradeCountedThisTrade = false
+if inLong or inShort
+    barsInTrade = bar_index - tradeStartBar
+    riskAmount = math.abs(entryPrice - slPrice)
+    if not na(l_entry)
+        line.set_x2(l_entry, bar_index + 10)
+        line.set_x2(l_sl, bar_index + 10)
+        line.set_x2(l_tp1, bar_index + 10)
+        line.set_x2(l_tp2, bar_index + 10)
+        line.set_x2(l_tp3, bar_index + 10)
+    if not na(lbl_entry)
+        label.set_x(lbl_entry, bar_index + 10)
+        label.set_x(lbl_sl, bar_index + 10)
+        label.set_x(lbl_tp1, bar_index + 10)
+        label.set_x(lbl_tp2, bar_index + 10)
+        label.set_x(lbl_tp3, bar_index + 10)
+    currentPnL = inLong ? close - entryPrice : entryPrice - close
+    currentR = riskAmount > 0 ? currentPnL / riskAmount : 0.0
+    if currentR < currentMAE
+        currentMAE := currentR
+    if currentR > currentMFE
+        currentMFE := currentR   
+    bool tp1Touched = inLong ? high >= tp1Price : low <= tp1Price
+    bool tp2Touched = inLong ? high >= tp2Price : low <= tp2Price
+    bool tp3Touched = inLong ? high >= tp3Price : low <= tp3Price
+    bool slTouched = inLong ? low <= slPrice : high >= slPrice    
+    if (tp1Touched or tp3Touched) and slTouched and not t1Hit and not stopHit
+        ltfResult = f_resolveHitOrder_LTF(inLong, slPrice, t1Hit ? (t2Hit ? tp3Price : tp2Price) : tp1Price)
+        if ltfResult == 1
+            slTouched := false
+        else if ltfResult == -1
+            tp1Touched := false
+            tp2Touched := false
+            tp3Touched := false    
+    if tp1Touched and not t1Hit
+        t1Hit := true
+        t1HitBar := bar_index
+    if tp2Touched and not t2Hit
+        t2Hit := true
+        t2HitBar := bar_index
+    if tp3Touched and not t3Hit
+        t3Hit := true
+        t3HitBar := bar_index
+    if slTouched and not stopHit
+        stopHit := true
+        stopHitBar := bar_index   
+    tradeComplete = t3Hit or stopHit or barsInTrade >= i_tradeLockBars
+    if tradeComplete and not tradeCountedThisTrade
+        totalTrades += 1
+        tradeCountedThisTrade := true
+        finalR = 0.0
+        isWin = false
+        if t3Hit
+            finalR := i_tp3Mult
+            isWin := true
+            tp3Wins += 1
+        else if t2Hit
+            finalR := i_tp2Mult
+            isWin := true
+            tp2Wins += 1
+        else if t1Hit
+            finalR := i_tp1Mult
+            isWin := true
+            tp1Wins += 1
+        else if stopHit
+            finalR := -1.0
+            stopLosses += 1
+            consecLosses += 1
+        else
+            finalR := currentR
+            timeouts += 1
+            if currentR > 0
+                isWin := true
+        sumR += finalR
+        if isWin
+            sumWinR += finalR
+            winCount += 1
+            if currentStreak < 0
+                currentStreak := 1
+            else
+                currentStreak += 1
+            maxWinStreak := math.max(maxWinStreak, currentStreak)
+            consecLosses := 0
+        else
+            sumLossR += math.abs(finalR)
+            lossCount += 1
+            if currentStreak > 0
+                currentStreak := -1
+            else
+                currentStreak -= 1
+            maxLossStreak := math.max(maxLossStreak, math.abs(currentStreak))
+        sumMAE += currentMAE
+        sumMFE += currentMFE
+        if tradeConfluenceScore >= 70
+            bucket70_plus_total += 1
+            if isWin
+                bucket70_plus_wins += 1
+        else if tradeConfluenceScore >= 60
+            bucket60_69_total += 1
+            if isWin
+                bucket60_69_wins += 1
+        else if tradeConfluenceScore >= 50
+            bucket50_59_total += 1
+            if isWin
+                bucket50_59_wins += 1
+        else
+            bucket40_49_total += 1
+            if isWin
+                bucket40_49_wins += 1
+        if tradeSession == "ASIA"
+            asiaTotal += 1
+            if isWin
+                asiaWins += 1
+        else if tradeSession == "LONDON"
+            londonTotal += 1
+            if isWin
+                londonWins += 1
+        else if tradeSession == "NY"
+            nyTotal += 1
+            if isWin
+                nyWins += 1
+        f_deleteTradeVisuals()
+        inLong := false
+        inShort := false
+        tradeType := "NONE"
+if buySignal or sellSignal
+    tradeCountedThisTrade := false
+riskAmount = entryPrice > 0 and slPrice > 0 ? math.abs(entryPrice - slPrice) : atr * i_stopATR
+currentPnL = inLong ? close - entryPrice : inShort ? entryPrice - close : 0.0
+progressR = riskAmount > 0 ? currentPnL / riskAmount : 0.0
+tp1WinRate = totalTrades > 0 ? (tp1Wins / totalTrades) * 100 : 0.0
+tp2WinRate = totalTrades > 0 ? (tp2Wins / totalTrades) * 100 : 0.0
+tp3WinRate = totalTrades > 0 ? (tp3Wins / totalTrades) * 100 : 0.0
+expectancy = totalTrades > 0 ? sumR / totalTrades : 0.0
+avgWin = winCount > 0 ? sumWinR / winCount : 0.0
+avgLoss = lossCount > 0 ? sumLossR / lossCount : 0.0
+profitFactor = sumLossR > 0 ? sumWinR / sumLossR : sumWinR > 0 ? 999.0 : 0.0
+avgMAE = totalTrades > 0 ? sumMAE / totalTrades : 0.0
+avgMFE = totalTrades > 0 ? sumMFE / totalTrades : 0.0
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🎨 VISUAL RENDERING
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+currentPhase = phaseBull ? "BULLISH" : phaseBear ? "BEARISH" : "NEUTRAL"
+phaseStrength = strictBullStack or strictBearStack ? "STRONG" : (bullishStack or bearishStack) ? "MODERATE" : "WEAK"
+bgColor = phaseBull ? color.new(i_colorBull, i_bgOpacity) : phaseBear ? color.new(i_colorBear, i_bgOpacity) : color.new(i_colorNeutral, i_bgOpacity + 2)
+chopBgColor = isChopZone and i_showChopZones ? color.new(i_colorChop, 92) : na
+bgcolor(isChopZone ? chopBgColor : bgColor, title="Phase/Chop Background")
+plot(ema8, "EMA 8", color.new(#00E5FF, 70), 1)
+plot(ema21, "EMA 21", color.new(#00E5FF, 30), 2)
+plot(ema55, "EMA 55", color.new(#00E5FF, 70), 1)
+plot(i_showExtendedEMAs ? ema89 : na, "EMA 89", color.new(#00E5FF, 80), 1)
+plot(i_showExtendedEMAs ? ema144 : na, "EMA 144", color.new(#00E5FF, 85), 1)
+plot(trueMean, "True Mean", color.new(#FFD700, 50), 2, plot.style_circles)
+p_ema21_fill = plot(ema21, display=display.none)
+p_ema55_fill = plot(ema55, display=display.none)
+fill(p_ema21_fill, p_ema55_fill, close > ribbonMid ? color.new(i_colorBull, 85) : color.new(i_colorBear, 85))
+if waveExhausted and not waveExhausted[1] and i_showExhaustionLine
+    exhaustLine = line.new(bar_index, low - atr, bar_index, high + atr, color=color.new(i_colorExhaustion, i_exhaustTransparency), width=i_exhaustLineWidth, style=line.style_solid)
+if i_showProjections and not na(target100) and not na(projLine618)
+    line.set_x2(projLine618, bar_index + 20)
+    line.set_x2(projLine100, bar_index + 20)
+    line.set_x2(projLine162, bar_index + 20)
+    label.set_x(projLabel618, bar_index + 22)
+    label.set_x(projLabel100, bar_index + 22)
+    label.set_x(projLabel162, bar_index + 22)
+isTiny = i_signalSize == "Tiny"
+isSmall = i_signalSize == "Small"
+isNormal = i_signalSize == "Normal"
+isLarge = i_signalSize == "Large"
+plotshape(buySignal, "Long Signal", shape.triangleup, location.belowbar, i_colorBull, size=size.small)
+plotshape(sellSignal, "Short Signal", shape.triangledown, location.abovebar, i_colorBear, size=size.small)
+if buySignal
+    label.new(bar_index, low - atr * 0.5, gradeLong + " [" + str.tostring(confluenceLong) + "/" + str.tostring(maxConfluence, "#") + "]", color=color.new(i_colorBull, 100), style=label.style_label_up, textcolor=i_colorBull, size=size.tiny)
+if sellSignal
+    label.new(bar_index, high + atr * 0.5, gradeShort + " [" + str.tostring(confluenceShort) + "/" + str.tostring(maxConfluence, "#") + "]", color=color.new(i_colorBear, 100), style=label.style_label_down, textcolor=i_colorBear, size=size.tiny)
+if waveExhaustionBullish and not waveExhaustionBullish[1]
+    label.new(bar_index, low - atr * 0.8, "◉", color=color.new(i_colorExhaustion, 100), style=label.style_label_up, textcolor=color.new(i_colorExhaustion, i_exhaustTransparency), size=size.tiny)
+if waveExhaustionBearish and not waveExhaustionBearish[1]
+    label.new(bar_index, high + atr * 0.8, "◉", color=color.new(i_colorExhaustion, 100), style=label.style_label_down, textcolor=color.new(i_colorExhaustion, i_exhaustTransparency), size=size.tiny)
+if bullDivFresh
+    label.new(bar_index, low - atr * 1.1, "◆", color=color.new(#00FFFF, 100), style=label.style_label_up, textcolor=color.new(#00FFFF, 20), size=size.tiny)
+if bearDivFresh
+    label.new(bar_index, high + atr * 1.1, "◆", color=color.new(#FF00FF, 100), style=label.style_label_down, textcolor=color.new(#FF00FF, 20), size=size.tiny)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🏷️ WAVE NUMBER LABELS
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var label waveLabel = na
+if i_showWaveLabels and waveCount != waveCount[1] and waveCount > 0
+    label.delete(waveLabel)
+    string waveText = str.tostring(waveCount)
+    color waveColor = sequenceDirection == 1 ? i_colorBull : i_colorBear
+    float labelPrice = na
+    labelStyle = label.style_label_down
+    if sequenceDirection == 1  
+        if waveCount == 1 or waveCount == 3 or waveCount == 5
+            labelPrice := high + atr * 0.3
+            labelStyle := label.style_label_down
+        else 
+            labelPrice := low - atr * 0.3
+            labelStyle := label.style_label_up
+    else  
+        if waveCount == 1 or waveCount == 3 or waveCount == 5  // Lows
+            labelPrice := low - atr * 0.3
+            labelStyle := label.style_label_up
+        else 
+            labelPrice := high + atr * 0.3
+            labelStyle := label.style_label_down
+    waveLabel := label.new(bar_index - swingLookback, labelPrice, waveText, 
+         color=color.new(waveColor, 70), textcolor=waveColor, 
+         style=labelStyle, size=size.small)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// 🎨 POLYLINE WAVE DRAWING
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+var polyline wavePoly = na
+var array<chart.point> wavePoints = array.new<chart.point>()
+if i_showWavePolyline and inActiveSequence and barstate.islast
+    if not na(wavePoly)
+        polyline.delete(wavePoly)
+    array.clear(wavePoints)
+    if not na(w1StartBar) and not na(w1StartPrice)
+        array.push(wavePoints, chart.point.from_index(w1StartBar, w1StartPrice))
+    if not na(w1EndBar) and not na(w1EndPrice) and waveCount >= 1
+        array.push(wavePoints, chart.point.from_index(w1EndBar, w1EndPrice))
+    if not na(w2EndBar) and not na(w2EndPrice) and waveCount >= 2
+        array.push(wavePoints, chart.point.from_index(w2EndBar, w2EndPrice))
+    if not na(w3EndBar) and not na(w3EndPrice) and waveCount >= 3
+        array.push(wavePoints, chart.point.from_index(w3EndBar, w3EndPrice))
+    if not na(w4EndBar) and not na(w4EndPrice) and waveCount >= 4
+        array.push(wavePoints, chart.point.from_index(w4EndBar, w4EndPrice))
+    if not na(w5EndBar) and not na(w5EndPrice) and waveCount >= 5
+        array.push(wavePoints, chart.point.from_index(w5EndBar, w5EndPrice))
+    if array.size(wavePoints) >= 2
+        waveColor = sequenceDirection == 1 ? i_colorBull : i_colorBear
+        wavePoly := polyline.new(wavePoints, line_color=color.new(waveColor, 30), line_width=2, line_style=line.style_solid)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🖥️ UNIFIED DASHBOARD SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+dashBgColor = color.new(#0d1117, i_dashboardTransp)
+dashBorderColor = color.new(#30363d, i_dashboardBorderTransp)
+accentCyan = #00E5FF
+accentGold = #FFD700
+accentPurple = #9C27B0
+consensusScore = phaseBull ? scoreLong : phaseBear ? scoreShort : math.max(scoreLong, scoreShort)
+currentGrade = phaseBull ? gradeLong : phaseBear ? gradeShort : "—"
+currentConfluence = phaseBull ? confluenceLong : phaseBear ? confluenceShort : math.max(confluenceLong, confluenceShort)
+barsRemaining = tradeLocked ? i_tradeLockBars - (bar_index - lockStartBar) : 0
+signalStatus = tradeLocked ? "LOCKED (" + str.tostring(barsRemaining) + ")" : isChopZone ? "⚠️ CHOP" : inRibbonZone ? "IN ZONE" : phaseBull or phaseBear ? "AWAITING PULLBACK" : "SCANNING"
+waveDirString = currentWaveDir == 1 ? "UP" : currentWaveDir == -1 ? "DOWN" : "—"
+waveExhaustStatus = waveExhausted ? "EXHAUSTED" : momentumDecayPct > 30 ? "WEAKENING" : "ACTIVE"
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📊 MAIN DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+if i_showDashboard and barstate.islast
+    var table dash = table.new(position.top_right, 2, 18, bgcolor=dashBgColor, border_color=color.new(accentCyan, i_dashboardBorderTransp), border_width=1)
+    table.cell(dash, 0, 0, "〰️ Wave Dynamics", text_color=accentCyan, text_size=size.small, bgcolor=color.new(accentCyan, 88))
+    table.merge_cells(dash, 0, 0, 1, 0)
+    neuralStatus = i_enableNeural ? (hurstTrending ? "🧠 TREND" : hurstChoppy ? "🧠 CHOP" : "🧠 RND") : "🧠 OFF"
+    neuralColor = hurstTrending ? i_colorBull : hurstChoppy ? i_colorChop : color.gray
+    table.cell(dash, 0, 1, neuralStatus + " H:" + str.tostring(smoothedHurst, "#.##") + " | LB:" + str.tostring(dynamicSwingLookback), text_color=neuralColor, text_size=size.tiny)
+    table.merge_cells(dash, 0, 1, 1, 1)
+    phaseIcon = phaseBull ? "🟢" : phaseBear ? "🔴" : "⚪"
+    table.cell(dash, 0, 2, phaseIcon + " " + currentPhase + " | " + phaseStrength, text_color=phaseBull ? i_colorBull : phaseBear ? i_colorBear : i_colorNeutral, text_size=size.tiny)
+    table.merge_cells(dash, 0, 2, 1, 2)
+    htfIcon = htfBias > 0 ? "📈" : htfBias < 0 ? "📉" : "➡️"
+    macroIcon = macroStructureBull ? "▲" : macroStructureBear ? "▼" : "—"
+    mtfStatus = i_enableMTFMapping ? macroIcon : "OFF"
+    table.cell(dash, 0, 3, "HTF: " + htfIcon + " " + htfBiasText + " | Macro: " + mtfStatus, text_color=htfBias > 0 ? i_colorBull : htfBias < 0 ? i_colorBear : color.gray, text_size=size.tiny)
+    table.merge_cells(dash, 0, 3, 1, 3)
+    regimeIcon = isTrendingRegime ? "📈" : isRangingRegime ? "📊" : "🔄"
+    gemIcon = hiddenBullGem or hiddenBearGem ? " 💎" : ""
+    chopText = regimeIcon + " " + chopRegime + " (" + str.tostring(chopIntensity, "#") + "%)" + gemIcon
+    regimeColor = isTrendingRegime ? i_colorBull : isRangingRegime ? (hiddenBullGem or hiddenBearGem ? accentGold : i_colorChop) : i_colorNeutral
+    table.cell(dash, 0, 4, chopText, text_color=regimeColor, text_size=size.tiny)
+    table.merge_cells(dash, 0, 4, 1, 4)
+    breakerStatus = inBullBreaker ? "🔥 BULL BRK" : inBearBreaker ? "🔥 BEAR BRK" : inBullOB ? "● BULL OB" : inBearOB ? "● BEAR OB" : "—"
+    breakerColor = (inBullBreaker or inBearBreaker) ? i_colorBreaker : (inBullOB or inBearOB) ? accentCyan : color.gray
+    table.cell(dash, 0, 5, breakerStatus, text_color=breakerColor, text_size=size.tiny)
+    table.merge_cells(dash, 0, 5, 1, 5)
+    channelText = "Channel: " + str.tostring(channel_position * 100, "#") + "% " + (atChannelTop ? "🔝" : atChannelBottom ? "🔻" : nearChannelTop ? "↗" : nearChannelBottom ? "↘" : "—")
+    channelColor = atChannelTop or atChannelBottom ? accentGold : nearChannelTop or nearChannelBottom ? accentCyan : color.gray
+    table.cell(dash, 0, 6, channelText, text_color=channelColor, text_size=size.tiny)
+    table.merge_cells(dash, 0, 6, 1, 6)
+    table.cell(dash, 0, 7, "Wave: " + waveDirString + " | " + waveExhaustStatus, text_color=waveExhausted ? i_colorExhaustion : i_colorWave, text_size=size.tiny)
+    table.merge_cells(dash, 0, 7, 1, 7)
+    table.cell(dash, 0, 8, signalStatus + " | " + i_signalMode, text_color=str.contains(signalStatus, "IN ZONE") ? #00FF88 : str.contains(signalStatus, "LOCKED") or str.contains(signalStatus, "CHOP") ? i_colorNeutral : color.gray, text_size=size.tiny)
+    table.merge_cells(dash, 0, 8, 1, 8)
+    scoreBar = ""
+    for i = 0 to 9
+        scoreBar := scoreBar + (i < consensusScore / 10 ? "█" : "░")
+    table.cell(dash, 0, 9, "Score: " + str.tostring(consensusScore, "#") + "% " + scoreBar + " [" + currentGrade + "]", text_color=consensusScore >= 70 ? #00FF88 : consensusScore >= 55 ? accentCyan : consensusScore >= 40 ? i_colorNeutral : #FF6B35, text_size=size.tiny)
+    table.merge_cells(dash, 0, 9, 1, 9)
+    table.cell(dash, 0, 10, "Confluence: " + str.tostring(currentConfluence) + "/" + str.tostring(maxConfluence, "#") + " (Min: " + str.tostring(i_minConfluence) + ")", text_color=currentConfluence >= i_minConfluence ? #00FF88 : #FF6B35, text_size=size.tiny)
+    table.merge_cells(dash, 0, 10, 1, 10)
+    if inLong or inShort
+        table.cell(dash, 0, 11, "📊 " + tradeType + " ACTIVE", text_color=inLong ? i_colorBull : i_colorBear, text_size=size.tiny)
+        table.merge_cells(dash, 0, 11, 1, 11)
+        pnlText = (progressR >= 0 ? "+" : "") + str.tostring(progressR, "#.##") + "R"
+        tpStatus = t3Hit ? "TP3 ✓" : t2Hit ? "TP2 ✓" : t1Hit ? "TP1 ✓" : stopHit ? "STOPPED" : "Active"
+        table.cell(dash, 0, 12, "P&L: " + pnlText + " | " + tpStatus, text_color=progressR >= 0 ? color.green : color.red, text_size=size.tiny)
+        table.merge_cells(dash, 0, 12, 1, 12)
+    else
+        gemStatus = hiddenBullGem ? "💎 BULL GEM!" : hiddenBearGem ? "💎 BEAR GEM!" : "No Active Trade"
+        gemColor = hiddenBullGem ? i_colorBull : hiddenBearGem ? i_colorBear : color.gray
+        table.cell(dash, 0, 11, gemStatus, text_color=gemColor, text_size=size.tiny)
+        table.merge_cells(dash, 0, 11, 1, 11)
+        streakText = currentStreak > 0 ? "🔥 " + str.tostring(currentStreak) + "W" : currentStreak < 0 ? "❄️ " + str.tostring(math.abs(currentStreak)) + "L" : "—"
+        table.cell(dash, 0, 12, "Streak: " + streakText + " | Session: " + currentSession, text_color=currentStreak > 0 ? i_colorBull : currentStreak < 0 ? i_colorBear : color.gray, text_size=size.tiny)
+        table.merge_cells(dash, 0, 12, 1, 12)
+    table.cell(dash, 0, 13, "── WIN RATES ──", text_color=color.new(accentCyan, 40), text_size=size.tiny, bgcolor=color.new(accentCyan, 95))
+    table.merge_cells(dash, 0, 13, 1, 13)
+    table.cell(dash, 0, 14, "Trades: " + str.tostring(totalTrades) + " | SL: " + str.tostring(stopLosses), text_color=color.gray, text_size=size.tiny)
+    table.merge_cells(dash, 0, 14, 1, 14)
+    tp1Color = tp1WinRate >= 60 ? #00FF88 : tp1WinRate >= 40 ? i_colorNeutral : #FF6B35
+    table.cell(dash, 0, 15, "TP1: " + str.tostring(tp1Wins) + " (" + str.tostring(tp1WinRate, "#.#") + "%)", text_color=tp1Color, text_size=size.tiny)
+    table.cell(dash, 1, 15, str.tostring(i_tp1Mult, "#.#") + "R", text_color=color.gray, text_size=size.tiny)
+    tp2Color = tp2WinRate >= 50 ? #00FF88 : tp2WinRate >= 30 ? i_colorNeutral : #FF6B35
+    table.cell(dash, 0, 16, "TP2: " + str.tostring(tp2Wins) + " (" + str.tostring(tp2WinRate, "#.#") + "%)", text_color=tp2Color, text_size=size.tiny)
+    table.cell(dash, 1, 16, str.tostring(i_tp2Mult, "#.#") + "R", text_color=color.gray, text_size=size.tiny)
+    tp3Color = tp3WinRate >= 40 ? #00FF88 : tp3WinRate >= 20 ? i_colorNeutral : #FF6B35
+    table.cell(dash, 0, 17, "TP3: " + str.tostring(tp3Wins) + " (" + str.tostring(tp3WinRate, "#.#") + "%)", text_color=tp3Color, text_size=size.tiny)
+    table.cell(dash, 1, 17, str.tostring(i_tp3Mult, "#.#") + "R", text_color=color.gray, text_size=size.tiny)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🤖 ASSISTANT + PRO METRICS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+if i_showCombinedPanel and barstate.islast
+    var table combined = table.new(position.bottom_left, 2, 18, bgcolor=dashBgColor, border_color=color.new(accentGold, i_dashboardBorderTransp), border_width=1)
+    table.cell(combined, 0, 0, "🤖 TRADE ASSISTANT", text_color=accentGold, text_size=size.small, bgcolor=color.new(accentGold, 88))
+    table.merge_cells(combined, 0, 0, 1, 0)
+    situation = hiddenBullGem ? "💎 BULL GEM - Range bottom + exhaustion!" : hiddenBearGem ? "💎 BEAR GEM - Range top + exhaustion!" : isDeadZone ? "🌀 DEAD ZONE - Middle of range" : waveExhausted ? "⚠️ Wave exhaustion detected!" : lossProtectionActive ? "🛡️ Loss protection active" : marketRegime == "COMPRESSION" ? "🔥 COMPRESSION - Breakout imminent" : strictBullStack ? "🚀 STRONG bullish trend" : strictBearStack ? "📉 STRONG bearish trend" : phaseBull ? "📈 Bullish bias" : phaseBear ? "📉 Bearish bias" : "⚖️ Neutral"
+    situationColor = hiddenBullGem or hiddenBearGem ? accentGold : isDeadZone ? i_colorChop : waveExhausted ? i_colorExhaustion : phaseBull ? i_colorBull : phaseBear ? i_colorBear : i_colorNeutral
+    table.cell(combined, 0, 1, situation, text_color=situationColor, text_size=size.tiny)
+    table.merge_cells(combined, 0, 1, 1, 1)
+    checkList = isTrendingRegime ? ((strictBullStack or strictBearStack ? "✓" : "✗") + " Trend " + (idealLongZone or idealShortZone ? "✓" : "✗") + " Zone " + ((mpiBullish or mpiBearish) ? "✓" : "✗") + " MPI " + (volumeModerate ? "✓" : "✗") + " Vol") : ((nearChannelTop or nearChannelBottom ? "✓" : "✗") + " Edge " + (waveExhausted ? "✓" : "✗") + " Exh " + ((bullDivergence or bearDivergence) ? "✓" : "✗") + " Div " + ((mpiTurningBull or mpiTurningBear) ? "✓" : "✗") + " Turn")
+    checkColor = hiddenBullGem or hiddenBearGem ? accentGold : #FF6B35
+    table.cell(combined, 0, 2, checkList, text_color=checkColor, text_size=size.tiny)
+    table.merge_cells(combined, 0, 2, 1, 2)
+    action = inLong or inShort ? (progressR >= 1.5 ? "🔥 RUNNER! Trail stop" : t1Hit ? "✅ Move SL to BE+" : progressR < -0.5 ? "🧘 Trust your plan" : "🎯 Let it develop") : hiddenBullGem or hiddenBearGem ? "⚡ HIDDEN GEM - High probability!" : isDeadZone ? "⏸️ Middle of range - no edge" : (currentConfluence >= i_minConfluence and inRibbonZone) ? "⚡ HIGH PROBABILITY ZONE!" : currentConfluence >= i_minConfluence - 2 ? "👀 Watch for setup" : "🔍 Wait for confluence"
+    actionColor = (hiddenBullGem or hiddenBearGem or t1Hit) ? accentGold : (currentConfluence >= i_minConfluence and inRibbonZone) ? #00FF88 : color.gray
+    table.cell(combined, 0, 3, action, text_color=actionColor, text_size=size.tiny)
+    table.merge_cells(combined, 0, 3, 1, 3)
+    targets = "SL: " + str.tostring(i_stopATR, "#.#") + "ATR | TP: " + str.tostring(i_tp1Mult, "#.#") + "/" + str.tostring(i_tp2Mult, "#.#") + "/" + str.tostring(i_tp3Mult, "#.#") + "R"
+    table.cell(combined, 0, 4, targets, text_color=color.gray, text_size=size.tiny)
+    table.merge_cells(combined, 0, 4, 1, 4)
+    table.cell(combined, 0, 5, "── PRO METRICS ──", text_color=color.new(accentCyan, 40), text_size=size.tiny, bgcolor=color.new(accentCyan, 95))
+    table.merge_cells(combined, 0, 5, 1, 5)
+    expColor = expectancy > 0.5 ? #00FF88 : expectancy > 0 ? i_colorNeutral : #FF6B35
+    table.cell(combined, 0, 6, "Expectancy:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 6, str.tostring(expectancy, "#.##") + "R", text_color=expColor, text_size=size.tiny)
+    pfColor = profitFactor > 1.5 ? #00FF88 : profitFactor > 1 ? i_colorNeutral : #FF6B35
+    table.cell(combined, 0, 7, "Profit Factor:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 7, str.tostring(profitFactor, "#.##"), text_color=pfColor, text_size=size.tiny)
+    winRate = totalTrades > 0 ? (winCount / totalTrades) * 100 : 0
+    wrColor = winRate >= 50 ? #00FF88 : #FF6B35
+    table.cell(combined, 0, 8, "Win Rate:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 8, str.tostring(winRate, "#.#") + "%", text_color=wrColor, text_size=size.tiny)
+    table.cell(combined, 0, 9, "Avg Win:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 9, str.tostring(avgWin, "#.##") + "R", text_color=#00FF88, text_size=size.tiny)
+    table.cell(combined, 0, 10, "Avg Loss:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 10, str.tostring(avgLoss, "#.##") + "R", text_color=#FF6B35, text_size=size.tiny)
+    table.cell(combined, 0, 11, "Avg MAE:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 11, str.tostring(avgMAE, "#.##") + "R", text_color=#FF6B35, text_size=size.tiny)
+    table.cell(combined, 0, 12, "Avg MFE:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 12, str.tostring(avgMFE, "#.##") + "R", text_color=#00FF88, text_size=size.tiny)
+    table.cell(combined, 0, 13, "── BUCKETS ──", text_color=color.new(accentPurple, 40), text_size=size.tiny, bgcolor=color.new(accentPurple, 95))
+    table.merge_cells(combined, 0, 13, 1, 13)
+    b40wr = bucket40_49_total > 0 ? (bucket40_49_wins / bucket40_49_total) * 100 : 0
+    b50wr = bucket50_59_total > 0 ? (bucket50_59_wins / bucket50_59_total) * 100 : 0
+    b60wr = bucket60_69_total > 0 ? (bucket60_69_wins / bucket60_69_total) * 100 : 0
+    b70wr = bucket70_plus_total > 0 ? (bucket70_plus_wins / bucket70_plus_total) * 100 : 0
+    table.cell(combined, 0, 14, "40-49%:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 14, str.tostring(bucket40_49_wins) + "/" + str.tostring(bucket40_49_total) + " (" + str.tostring(b40wr, "#") + "%)", text_color=b40wr >= 50 ? #00FF88 : #FF6B35, text_size=size.tiny)
+    table.cell(combined, 0, 15, "50-59%:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 15, str.tostring(bucket50_59_wins) + "/" + str.tostring(bucket50_59_total) + " (" + str.tostring(b50wr, "#") + "%)", text_color=b50wr >= 50 ? #00FF88 : #FF6B35, text_size=size.tiny)
+    table.cell(combined, 0, 16, "60-69%:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 16, str.tostring(bucket60_69_wins) + "/" + str.tostring(bucket60_69_total) + " (" + str.tostring(b60wr, "#") + "%)", text_color=b60wr >= 50 ? #00FF88 : #FF6B35, text_size=size.tiny)
+    table.cell(combined, 0, 17, "70%+:", text_color=color.gray, text_size=size.tiny)
+    table.cell(combined, 1, 17, str.tostring(bucket70_plus_wins) + "/" + str.tostring(bucket70_plus_total) + " (" + str.tostring(b70wr, "#") + "%)", text_color=b70wr >= 50 ? #00FF88 : #FF6B35, text_size=size.tiny)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 📐 WAVE INTELLIGENCE PANEL with CHANNEL ANALYSIS 
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+if i_showWavePanel and barstate.islast
+    var table wave = table.new(position.bottom_right, 2, 19, bgcolor=dashBgColor, border_color=color.new(accentPurple, i_dashboardBorderTransp), border_width=1)
+    table.cell(wave, 0, 0, "📐 WAVE DYNAMICS", text_color=accentPurple, text_size=size.small, bgcolor=color.new(accentPurple, 88))
+    table.merge_cells(wave, 0, 0, 1, 0)
+    chPos = nz(channelPosition, 50)
+    chPosInt = math.round(chPos / 5)  
+    chPosInt := math.max(0, math.min(20, chPosInt))
+    channelGauge = "L|"
+    for i = 0 to 20
+        if i == chPosInt
+            channelGauge := channelGauge + "●"
+        else if i == 10
+            channelGauge := channelGauge + "|"
+        else
+            channelGauge := channelGauge + "─"
+    channelGauge := channelGauge + "|H"
+    chGaugeColor = chPos >= 80 ? i_colorBear : chPos <= 20 ? i_colorBull : chPos >= 60 ? #FF9500 : chPos <= 40 ? accentCyan : color.gray
+    table.cell(wave, 0, 1, channelGauge, text_color=chGaugeColor, text_size=size.tiny)
+    table.merge_cells(wave, 0, 1, 1, 1)
+    zoneIcon = priceZone == "UPPER" ? "🔴" : priceZone == "LOWER" ? "🟢" : priceZone == "CENTER" ? "⚪" : "🟡"
+    table.cell(wave, 0, 2, "CHANNEL POS", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 2, str.tostring(chPos, "#") + "% " + zoneIcon + " " + priceZone, text_color=chGaugeColor, text_size=size.tiny)
+    chWidthDisplay = not na(currentChannelWidth) ? str.tostring(currentChannelWidth, format.mintick) : "—"
+    chCenterDisplay = not na(currentCenterPrice) ? str.tostring(currentCenterPrice, format.mintick) : "—"
+    table.cell(wave, 0, 3, "CH WIDTH", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 3, chWidthDisplay + " | MID: " + chCenterDisplay, text_color=i_centerLineColor, text_size=size.tiny)
+    table.cell(wave, 0, 4, "── STRUCTURE ──", text_color=color.new(accentCyan, 40), text_size=size.tiny, bgcolor=color.new(accentCyan, 95))
+    table.merge_cells(wave, 0, 4, 1, 4)
+    htfBiasIcon = htfBias > 0 ? "📈 BULL" : htfBias < 0 ? "📉 BEAR" : "➡️ NEUT"
+    htfBiasColor = htfBias > 0 ? i_colorBull : htfBias < 0 ? i_colorBear : color.gray
+    table.cell(wave, 0, 5, "HTF (" + i_htfTimeframe + ")", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 5, htfBiasIcon, text_color=htfBiasColor, text_size=size.tiny) 
+    structureIcon = inBullishStructure ? "▲ HH+HL" : inBearishStructure ? "▼ LH+LL" : "— MIXED"
+    structureColor = inBullishStructure ? i_colorBull : inBearishStructure ? i_colorBear : color.gray
+    table.cell(wave, 0, 6, "STRUCTURE", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 6, structureIcon + " | " + lastStructure, text_color=structureColor, text_size=size.tiny)
+    table.cell(wave, 0, 7, "── WAVE DATA ──", text_color=color.new(#FFD700, 40), text_size=size.tiny, bgcolor=color.new(#FFD700, 95))
+    table.merge_cells(wave, 0, 7, 1, 7)
+    waveText = inActiveSequence ? "WAVE " + str.tostring(waveCount) + "/5 " + (sequenceDirection == 1 ? "▲" : "▼") : "○ WAITING"
+    waveColor = waveCount == 3 ? accentGold : waveCount == 5 ? i_colorExhaustion : inActiveSequence ? i_colorWave : color.gray
+    waveIcon = waveCount == 2 or waveCount == 4 ? "🎯" : waveCount == 3 ? "★" : waveCount == 5 ? "⚠" : ""
+    table.cell(wave, 0, 8, "WAVE", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 8, waveText + " " + waveIcon, text_color=waveColor, text_size=size.tiny)
+    w1Display = not na(wave1Mag) ? str.tostring(wave1Mag, "#.#") + " (" + str.tostring(wave1ATR, "#.#") + "ATR)" : "—"
+    w3Display = not na(wave3Mag) ? str.tostring(wave3Mag, "#.#") + " (" + str.tostring(wave3ATR, "#.#") + "ATR)" : "—"
+    magColor = nz(wave3to1Ratio, 1.0) >= 1.0 ? #00FF88 : nz(wave3to1Ratio, 1.0) >= 0.786 ? accentCyan : #FF9500
+    table.cell(wave, 0, 9, "W1 MAG", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 9, w1Display, text_color=accentCyan, text_size=size.tiny)
+    table.cell(wave, 0, 10, "W3 MAG", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 10, w3Display, text_color=magColor, text_size=size.tiny)
+    ratioDisplay = not na(wave3to1Ratio) ? str.tostring(wave3to1Ratio, "#.##") + "x" : "—"
+    ratioLabel = nz(wave3to1Ratio, 0) >= 1.618 ? "EXTENDED!" : nz(wave3to1Ratio, 1.0) >= 1.0 ? "HEALTHY" : nz(wave3to1Ratio, 1.0) >= 0.786 ? "NORMAL" : "WEAK"
+    ratioColor = nz(wave3to1Ratio, 0) >= 1.618 ? #00FF88 : nz(wave3to1Ratio, 1.0) >= 1.0 ? accentCyan : nz(wave3to1Ratio, 1.0) >= 0.786 ? i_colorNeutral : #FF9500
+    table.cell(wave, 0, 11, "W3/W1 RATIO", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 11, ratioDisplay + " " + ratioLabel, text_color=ratioColor, text_size=size.tiny)
+    pullbackDisplay = not na(wave2RetracePct) ? str.tostring(wave2RetracePct, "#") + "%" : "—"
+    pullbackLabel = nz(wave2RetracePct, 50) <= 38.2 ? "SHALLOW" : nz(wave2RetracePct, 50) <= 61.8 ? "NORMAL" : "DEEP"
+    pullbackColor = nz(wave2RetracePct, 50) <= 50 ? accentCyan : nz(wave2RetracePct, 50) <= 61.8 ? i_colorNeutral : #FF9500
+    table.cell(wave, 0, 12, "W2 RETRACE", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 12, pullbackDisplay + " " + pullbackLabel, text_color=pullbackColor, text_size=size.tiny)
+    healthLabel = trendHealthScore >= 70 ? "STRONG" : trendHealthScore >= 50 ? "HEALTHY" : trendHealthScore >= 30 ? "WEAK" : "EXHAUSTING"
+    healthColor = trendHealthScore >= 70 ? #00FF88 : trendHealthScore >= 50 ? accentCyan : trendHealthScore >= 30 ? #FF9500 : #FF3366
+    table.cell(wave, 0, 13, "TREND HEALTH", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 13, str.tostring(trendHealthScore, "#") + "% " + healthLabel, text_color=healthColor, text_size=size.tiny)
+    table.cell(wave, 0, 14, "── TARGET ──", text_color=color.new(#FFD700, 40), text_size=size.tiny, bgcolor=color.new(#FFD700, 95))
+    table.merge_cells(wave, 0, 14, 1, 14)
+    targetDisplay = not na(measuredMoveTarget) ? str.tostring(measuredMoveTarget, format.mintick) : "—"
+    targetColor = not na(measuredMoveTarget) ? #FFD700 : color.gray
+    float distToTarget = na
+    if not na(measuredMoveTarget)
+        distToTarget := sequenceDirection == 1 ? measuredMoveTarget - close : close - measuredMoveTarget
+    distDisplay = not na(distToTarget) ? ((distToTarget >= 0 ? "+" : "") + str.tostring(distToTarget, "#.#")) : ""
+    table.cell(wave, 0, 15, "W5 TARGET", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 15, targetDisplay + " " + distDisplay, text_color=targetColor, text_size=size.tiny)
+    alignedBull = htfBias > 0 and inBullishStructure
+    alignedBear = htfBias < 0 and inBearishStructure
+    signalReady = (currentConfluence >= i_minConfluence) and not tradeLocked and not isChopZone and (alignedBull or alignedBear or not i_requireHTFAlign)
+    statusText = isChopZone ? "🌀 CHOP" : signalReady ? "✓ READY" : tradeLocked ? "⏳ LOCKED" : "○ WAIT"
+    statusColor = signalReady ? #00FF88 : isChopZone ? i_colorChop : color.gray
+    table.cell(wave, 0, 16, "SIGNAL", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 16, statusText, text_color=statusColor, text_size=size.tiny)
+    entryZone = waveCount == 2 or waveCount == 4 ? "🎯 ENTRY ZONE" : waveCount == 5 ? "⚠ EXIT WATCH" : waveCount == 3 ? "★ BREAKOUT" : "—"
+    entryColor = waveCount == 2 or waveCount == 4 ? #00FF88 : waveCount == 5 ? i_colorExhaustion : waveCount == 3 ? accentGold : color.gray
+    table.cell(wave, 0, 17, "ACTION", text_color=color.gray, text_size=size.tiny)
+    table.cell(wave, 1, 17, entryZone, text_color=entryColor, text_size=size.tiny)
+    table.cell(wave, 0, 18, "◈ Dskyz Wave Dynamics", text_color=color.new(accentPurple, 40), text_size=size.tiny)
+    table.merge_cells(wave, 0, 18, 1, 18)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔔 ALERT CONDITIONS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+alertcondition(buySignal, "WD Long", "WAVE DYNAMICS: Long Entry")
+alertcondition(sellSignal, "WD Short", "WAVE DYNAMICS: Short Entry")
+alertcondition(waveExhaustionBullish and not waveExhaustionBullish[1], "Wave Exhaustion Bull", "Wave Exhaustion (Bullish Reversal Setup)")
+alertcondition(waveExhaustionBearish and not waveExhaustionBearish[1], "Wave Exhaustion Bear", "Wave Exhaustion (Bearish Reversal Setup)")
+alertcondition(bullBOS, "Bull BOS", "Break of Structure (Bullish)")
+alertcondition(bearBOS, "Bear BOS", "Break of Structure (Bearish)")
+alertcondition(t1Hit and not t1Hit[1], "TP1 Hit", "Take Profit 1 Reached")
+alertcondition(t2Hit and not t2Hit[1], "TP2 Hit", "Take Profit 2 Reached")
+alertcondition(t3Hit and not t3Hit[1], "TP3 Hit", "Take Profit 3 Reached")
+alertcondition(stopHit and not stopHit[1], "Stop Hit", "Stop Loss Triggered")
+alertcondition(hiddenBullGem and not hiddenBullGem[1], "Hidden Bull Gem", "💎 Bullish reversal setup at range extreme!")
+alertcondition(hiddenBearGem and not hiddenBearGem[1], "Hidden Bear Gem", "💎 Bearish reversal setup at range extreme!")
+alertcondition(htfBias > 0 and htfBias[1] <= 0, "HTF Bull", "Higher timeframe turned bullish")
+alertcondition(htfBias < 0 and htfBias[1] >= 0, "HTF Bear", "Higher timeframe turned bearish")
+alertcondition(waveCount == 2 and waveCount[1] == 1, "Wave 2 Entry Zone", "🎯 Wave 2 pullback - potential entry zone!")
+alertcondition(waveCount == 3 and waveCount[1] == 2, "Wave 3 Breakout", "★ Wave 3 confirmed - strongest impulse wave!")
+alertcondition(waveCount == 4 and waveCount[1] == 3, "Wave 4 Entry Zone", "🎯 Wave 4 pullback - potential entry zone!")
+alertcondition(waveCount == 5 and waveCount[1] == 4, "Wave 5 Caution", "⚠ Wave 5 - watch for exhaustion/reversal!")
+alertcondition(waveQuality_Weak and not waveQuality_Weak[1], "Weak Wave 3", "⚠ Wave 3 is weak (< Wave 1) - trend may be failing!")
+alertcondition(waveQuality_Exhausting and not waveQuality_Exhausting[1], "Wave Exhaustion Detected", "⚠ Wave 5 showing exhaustion - reversal likely!")
+alertcondition(longWaveEntry and not longWaveEntry[1], "WD Wave Entry Long", "🌊 WAVE DYNAMICS: Long on Wave 2/4 pullback!")
+alertcondition(shortWaveEntry and not shortWaveEntry[1], "WD Wave Entry Short", "🌊 WAVE DYNAMICS: Short on Wave 2/4 pullback!")
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
+// ◈ Wave Dynamics | 2026 DAFE Trading Systems
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════
