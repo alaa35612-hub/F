@@ -1,4 +1,5 @@
 import ccxt
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Tuple, Set
@@ -14,11 +15,17 @@ SYMBOL_BLACKLIST: List[str] = []
 
 # Timeframe & bars (Pine uses chart timeframe; set explicitly here)
 TIMEFRAME = "15m"  # Assumption: Pine uses chart timeframe; default to 15m for scanning.
-N_BARS = 300  # Matches input: maxHistoryBars default
+N_BARS = 1000  # Matches input: maxHistoryBars default
+
+# --- Pine match mode ---
+MATCH_PINE_MODE = True
+
+# Pine does NOT have a fixed warmup "continue" like this
+WARMUP_BARS = 0
 EXTRA_BARS_MARGIN = 50
 
 # Signal age filter
-MAX_SIGNAL_AGE_BARS = 3
+MAX_SIGNAL_AGE_BARS = 10**9 if MATCH_PINE_MODE else 3
 MAX_SIGNAL_AGE_MINUTES: Optional[int] = None
 
 # Grade thresholds (classification only)
@@ -115,18 +122,26 @@ def sma(series: List[float], length: int) -> List[Optional[float]]:
     return result
 
 
-def rma(series: List[float], length: int) -> List[Optional[float]]:
+def rma(series: List[Optional[float]], length: int) -> List[Optional[float]]:
     result: List[Optional[float]] = [None] * len(series)
     if length <= 0 or not series:
         return result
-    if len(series) < length:
+    valid_start_idx = 0
+    while valid_start_idx < len(series) and series[valid_start_idx] is None:
+        valid_start_idx += 1
+    if len(series) - valid_start_idx < length:
         return result
-    first_avg = sum(series[:length]) / length
-    result[length - 1] = first_avg
-    prev = first_avg
-    for i in range(length, len(series)):
-        prev = (prev * (length - 1) + series[i]) / length
-        result[i] = prev
+    first_chunk = series[valid_start_idx : valid_start_idx + length]
+    if any(value is None for value in first_chunk):
+        return result
+    alpha = 1 / length
+    current_val = sum(first_chunk) / length
+    result[valid_start_idx + length - 1] = current_val
+    for i in range(valid_start_idx + length, len(series)):
+        if series[i] is None:
+            continue
+        current_val = alpha * series[i] + (1 - alpha) * current_val
+        result[i] = current_val
     return result
 
 
@@ -153,11 +168,19 @@ def rsi(series: List[float], length: int) -> List[Optional[float]]:
     avg_loss = rma(losses, length)
     result: List[Optional[float]] = [None] * len(series)
     for i in range(len(series)):
-        if avg_gain[i] is None or avg_loss[i] is None or avg_loss[i] == 0:
+        ag = avg_gain[i]
+        al = avg_loss[i]
+        if ag is None or al is None:
             result[i] = None
-        else:
-            rs = avg_gain[i] / avg_loss[i]
-            result[i] = 100 - (100 / (1 + rs))
+            continue
+        if al == 0 and ag == 0:
+            result[i] = 50.0
+            continue
+        if al == 0:
+            result[i] = 100.0
+            continue
+        rs = ag / al
+        result[i] = 100 - (100 / (1 + rs))
     return result
 
 
@@ -725,21 +748,33 @@ def classify_element(
     if element is None or element.endBar is None:
         return element
     age = bar_index - element.endBar
-    caused_bullish_bos = False
-    caused_bearish_bos = False
-    if ms.bullishBOS and ms.lastBOSBar is not None and ms.lastBOSBar > element.endBar and ms.lastBOSBar - element.endBar <= 10:
-        caused_bullish_bos = True
+    caused_bullish_bos = (
+        ms.bullishBOS
+        and ms.lastBOSBar is not None
+        and ms.lastBOSBar > element.endBar
+        and (ms.lastBOSBar - element.endBar) <= 10
+    )
+    caused_bearish_bos = (
+        ms.bearishBOS
+        and ms.lastBOSBar is not None
+        and ms.lastBOSBar > element.endBar
+        and (ms.lastBOSBar - element.endBar) <= 10
+    )
+
+    if caused_bullish_bos or caused_bearish_bos:
         element.causedBOS = True
-    if ms.bearishBOS and ms.lastBOSBar is not None and ms.lastBOSBar > element.endBar and ms.lastBOSBar - element.endBar <= 10:
-        caused_bearish_bos = True
-        element.causedBOS = True
-    liquidity_sweep = (bsl_swept or ssl_swept) and bar_index - element.endBar <= 5
+
+    liquidity_sweep = (bsl_swept or ssl_swept) and (bar_index - element.endBar) <= 5
+
     high_volume = False
     if element.endBar >= bar_index - max_history_bars:
-        idx = bar_index - element.endBar
-        if 0 <= idx < len(volume_series):
-            if volume_sma20[idx] is not None and volume_series[idx] > volume_sma20[idx] * 1.5:
+        elem_i = element.endBar
+        if 0 <= elem_i < len(volume_series):
+            v = volume_series[elem_i]
+            vma = volume_sma20[elem_i]
+            if vma is not None and v > vma * 1.5:
                 high_volume = True
+
     if caused_bullish_bos or caused_bearish_bos:
         element.elementType = "Order Block"
         element.narrativeRole = "Bullish OB (caused BOS)" if caused_bullish_bos else "Bearish OB (caused BOS)"
@@ -878,7 +913,7 @@ def build_htf_series(
     close: List[float],
     volume: List[float],
     htf_minutes: int,
-) -> Tuple[Dict[str, List[Optional[float]]], List[int], List[int]]:
+) -> Tuple[Dict[str, List[Optional[float]]], List[int], List[int], List[float]]:
     bucket_ms = htf_minutes * 60 * 1000
     buckets: Dict[int, Dict[str, float]] = {}
     bucket_order: List[int] = []
@@ -899,6 +934,8 @@ def build_htf_series(
             buckets[bucket]["close"] = close[i]
             buckets[bucket]["volume"] += volume[i]
 
+    bucket_close_list: List[float] = [buckets[b]["close"] for b in bucket_order]
+
     htf_open: List[Optional[float]] = [None] * len(timestamps)
     htf_high: List[Optional[float]] = [None] * len(timestamps)
     htf_low: List[Optional[float]] = [None] * len(timestamps)
@@ -912,6 +949,7 @@ def build_htf_series(
         data = buckets.get(bucket)
         bucket_index_map[i] = bucket_index_lookup.get(bucket, 0)
         if data:
+            # Use final bucket values to match Pine lookahead_on behavior.
             htf_open[i] = data["open"]
             htf_high[i] = data["high"]
             htf_low[i] = data["low"]
@@ -928,6 +966,7 @@ def build_htf_series(
         },
         bucket_index_map,
         bucket_order,
+        bucket_close_list,
     )
 
 
@@ -968,30 +1007,20 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
 
     htf_ccxt = tv_to_ccxt_timeframe(htfTimeframe)
     htf_minutes = timeframe_to_minutes(htf_ccxt)
-    htf_series, htf_bucket_index, htf_bucket_order = build_htf_series(
+    htf_series, htf_bucket_index, htf_bucket_order, htf_close_by_bucket = build_htf_series(
         timestamps, open_, high, low, close, volume, htf_minutes
     )
-    htf_sma20_full: List[Optional[float]] = [None] * len(close)
     htf_close = htf_series["close"]
     htf_high = htf_series["high"]
     htf_low = htf_series["low"]
-
-    htf_close_by_bucket: List[float] = []
-    bucket_first_index: Dict[int, int] = {}
-    for i, bucket_idx in enumerate(htf_bucket_index):
-        if bucket_idx not in bucket_first_index:
-            bucket_first_index[bucket_idx] = i
-    for bucket_idx in range(len(htf_bucket_order)):
-        first_idx = bucket_first_index.get(bucket_idx)
-        if first_idx is not None and htf_close[first_idx] is not None:
-            htf_close_by_bucket.append(htf_close[first_idx])
-        else:
-            htf_close_by_bucket.append(0.0)
     htf_sma20_by_bucket = sma(htf_close_by_bucket, 20)
+    htf_sma20_full: List[Optional[float]] = [None] * len(close)
     for i in range(len(close)):
         bucket_idx = htf_bucket_index[i]
         if 0 <= bucket_idx < len(htf_sma20_by_bucket):
             htf_sma20_full[i] = htf_sma20_by_bucket[bucket_idx]
+        else:
+            htf_sma20_full[i] = None
 
     ms = MarketStructure()
     elements: List[ICTElement] = []
@@ -999,7 +1028,7 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
     mitigation_levels: List[ICTElement] = []
     current_origin: Optional[ICTElement] = None
     narrative = MarketNarrative()
-    last_detection_bar = -1000
+    last_detection_bar = 0
 
     signals: List[str] = []
     signal_dedup: Set[Tuple[str, str, int, str]] = set()
@@ -1089,6 +1118,9 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
                 htf_bias = "NEUTRAL"
         else:
             htf_bias = "NEUTRAL"
+
+        if i < WARMUP_BARS:
+            continue
 
         bsl_swept = False
         ssl_swept = False
@@ -1345,6 +1377,8 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
             ssl[i],
             last_score,
         )
+        while len(elements) > maxElementsToDisplay * 3:
+            elements.pop(0)
 
     return signals
 
@@ -1383,6 +1417,17 @@ def fetch_ohlcv(exchange: ccxt.Exchange, symbol: str) -> List[List[float]]:
         return []
 
 
+def drop_unconfirmed_last_bar(ohlcv: List[List[float]], tf_minutes: int) -> List[List[float]]:
+    if not ohlcv:
+        return ohlcv
+    now_ms = int(time.time() * 1000)
+    last_open = int(ohlcv[-1][0])
+    tf_ms = tf_minutes * 60 * 1000
+    if last_open + tf_ms > now_ms:
+        return ohlcv[:-1]
+    return ohlcv
+
+
 def main() -> None:
     if not SCAN_ENABLED:
         return
@@ -1392,6 +1437,9 @@ def main() -> None:
     for symbol in symbols:
         ohlcv = fetch_ohlcv(exchange, symbol)
         if not ohlcv:
+            continue
+        ohlcv = drop_unconfirmed_last_bar(ohlcv, timeframe_to_minutes(TIMEFRAME))
+        if len(ohlcv) < 200:
             continue
         signals = evaluate_symbol(symbol, ohlcv)
         all_signals.extend(signals)
