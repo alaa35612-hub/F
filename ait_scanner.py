@@ -14,7 +14,8 @@ SYMBOL_BLACKLIST: List[str] = []
 
 # Timeframe & bars (Pine uses chart timeframe; set explicitly here)
 TIMEFRAME = "15m"  # Assumption: Pine uses chart timeframe; default to 15m for scanning.
-N_BARS = 300  # Matches input: maxHistoryBars default
+N_BARS = 1000  # Matches input: maxHistoryBars default
+WARMUP_BARS = 100
 EXTRA_BARS_MARGIN = 50
 
 # Signal age filter
@@ -115,18 +116,26 @@ def sma(series: List[float], length: int) -> List[Optional[float]]:
     return result
 
 
-def rma(series: List[float], length: int) -> List[Optional[float]]:
+def rma(series: List[Optional[float]], length: int) -> List[Optional[float]]:
     result: List[Optional[float]] = [None] * len(series)
     if length <= 0 or not series:
         return result
-    if len(series) < length:
+    valid_start_idx = 0
+    while valid_start_idx < len(series) and series[valid_start_idx] is None:
+        valid_start_idx += 1
+    if len(series) - valid_start_idx < length:
         return result
-    first_avg = sum(series[:length]) / length
-    result[length - 1] = first_avg
-    prev = first_avg
-    for i in range(length, len(series)):
-        prev = (prev * (length - 1) + series[i]) / length
-        result[i] = prev
+    first_chunk = series[valid_start_idx : valid_start_idx + length]
+    if any(value is None for value in first_chunk):
+        return result
+    alpha = 1 / length
+    current_val = sum(first_chunk) / length
+    result[valid_start_idx + length - 1] = current_val
+    for i in range(valid_start_idx + length, len(series)):
+        if series[i] is None:
+            continue
+        current_val = alpha * series[i] + (1 - alpha) * current_val
+        result[i] = current_val
     return result
 
 
@@ -912,6 +921,7 @@ def build_htf_series(
         data = buckets.get(bucket)
         bucket_index_map[i] = bucket_index_lookup.get(bucket, 0)
         if data:
+            # Use final bucket values to match Pine lookahead_on behavior.
             htf_open[i] = data["open"]
             htf_high[i] = data["high"]
             htf_low[i] = data["low"]
@@ -1089,6 +1099,9 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
                 htf_bias = "NEUTRAL"
         else:
             htf_bias = "NEUTRAL"
+
+        if i < WARMUP_BARS:
+            continue
 
         bsl_swept = False
         ssl_swept = False
@@ -1345,6 +1358,8 @@ def evaluate_symbol(symbol: str, ohlcv: List[List[float]]) -> List[str]:
             ssl[i],
             last_score,
         )
+        while len(elements) > maxElementsToDisplay * 3:
+            elements.pop(0)
 
     return signals
 
